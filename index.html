@@ -25,6 +25,10 @@
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* geen tekst selecteren of lang-indrukken-menu (behalve in invulvelden) */
+*{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select,[contenteditable]{-webkit-user-select:text;user-select:text;-webkit-touch-callout:default}
+img,svg{-webkit-user-drag:none;user-drag:none;pointer-events:auto}
 html{touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{min-height:100vh;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,sans-serif;font-size:15px}
 body.lock{overflow:hidden}
@@ -901,7 +905,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.8.0";
+const APP_VERSION="1.8.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1712,6 +1716,9 @@ loadExercises();
 showWelcome();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 setTimeout(()=>checkUpdate(false),1500);
+document.addEventListener("contextmenu",ev=>{if(!ev.target.closest("input,textarea,select"))ev.preventDefault()});
+document.addEventListener("selectstart",ev=>{if(!ev.target.closest||!ev.target.closest("input,textarea,select"))ev.preventDefault()});
+document.addEventListener("dragstart",ev=>{if(ev.target.tagName==="IMG")ev.preventDefault()});
 /* geen zoom: knijpen en dubbeltikken uitschakelen */
 ["gesturestart","gesturechange","gestureend"].forEach(t=>document.addEventListener(t,ev=>ev.preventDefault(),{passive:false}));
 document.addEventListener("touchmove",ev=>{if(ev.touches&&ev.touches.length>1)ev.preventDefault()},{passive:false});
