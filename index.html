@@ -167,6 +167,27 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .toast.show{opacity:1}
 .fab{position:fixed;right:max(16px,calc(50% - 264px));bottom:calc(var(--sab) + 96px);width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,#ffb26b,#e3ff6a);color:var(--acc-ink);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(200,255,46,.25);z-index:15}
 .fab svg{width:28px;height:28px}
+/* schema's */
+.wt-row{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scrollbar-width:none;scroll-snap-type:x mandatory}
+.wt-row::-webkit-scrollbar{display:none}
+.wt-card{position:relative;flex:none;width:150px;scroll-snap-align:start;border-radius:20px;background:linear-gradient(160deg,rgba(255,150,70,.14),var(--card) 60%);border:1px solid rgba(255,170,100,.14);text-align:left}
+.wt-main{display:block;width:100%;padding:12px;text-align:left}
+.wt-ths{display:flex;margin-bottom:10px}
+.wt-th{flex:none;width:40px;height:40px;border-radius:12px;border:2px solid var(--card);margin-right:-12px}
+.wt-th.noimg svg{width:20px;height:20px}
+.wt-card b{display:block;font-family:"Kaushan Script",cursive;font-weight:400;font-size:24px;line-height:1.15;padding-right:4px;background:linear-gradient(100deg,#ffd9a8,#ffa45c 50%,#e3ff6a);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wt-card span{display:block;font-size:12px;color:var(--muted)}
+.wt-card em{display:inline-block;margin-top:10px;font-style:normal;font-size:12px;font-weight:800;color:#1a1000;background:linear-gradient(100deg,#ffb26b,#e3ff6a);padding:5px 10px;border-radius:9px}
+.wt-edit{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:10px;background:rgba(0,0,0,.35);color:#ffe6d2;font-size:15px}
+.wt-new{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;padding:14px;background:var(--card);border:1.5px dashed rgba(255,170,100,.35);min-height:150px}
+.wt-new i{font-style:normal;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#ffb26b,#e3ff6a);color:#1a1000;font-weight:800;font-size:20px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.wt-new b{font-family:Archivo;font-size:16px;background:none;-webkit-background-clip:initial;background-clip:initial;color:#fff}
+.tpl-pick{margin-bottom:12px}.tpl-pick small{opacity:.6;margin-left:3px}
+.tpl-ctl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.tpl-ctl .stepper input{width:48px}
+.tpl-ord{display:flex;flex-direction:column;gap:4px}
+.tpl-ord button{width:34px;height:26px;border-radius:8px;background:var(--card2);color:#ffb26b;font-size:11px}
+.tpl-ord button:disabled{opacity:.3}
 /* oefeningen */
 .wk-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .wk-title{font-family:"Kaushan Script",cursive;font-size:34px;line-height:1.15;padding:0 6px 6px 0;background:linear-gradient(100deg,#ffd9a8,#ffa45c 50%,#e3ff6a);-webkit-background-clip:text;background-clip:text;color:transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -179,10 +200,10 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .ex{background:var(--card);border-radius:20px;padding:10px;margin-bottom:12px}
 .ex-head{display:flex;gap:12px;align-items:center}
 .exph-btn{flex:none}
-.exph,.pk-img,.exi-ph{position:relative;display:block;overflow:hidden;background:#e9e6e1}
+.exph,.pk-img,.exi-ph,.wt-th{position:relative;display:block;overflow:hidden;background:#e9e6e1}
 .exph{width:76px;height:64px;border-radius:14px}
-.exph img,.pk-img img,.exi-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.exph img.alt,.pk-img img.alt,.exi-ph img.alt{animation:exswap 2.4s ease-in-out infinite}
+.exph img,.pk-img img,.exi-ph img,.wt-th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.exph img.alt,.pk-img img.alt,.exi-ph img.alt,.wt-th img.alt{animation:exswap 2.4s ease-in-out infinite}
 @keyframes exswap{0%,40%{opacity:0}50%,90%{opacity:1}100%{opacity:0}}
 .noimg{background:linear-gradient(135deg,rgba(255,178,107,.25),rgba(227,255,106,.15))!important;display:flex!important;align-items:center;justify-content:center;color:#ffcfa3}
 .noimg img{display:none}
@@ -546,7 +567,7 @@ function needsBackup(){
   return Date.now()-getLastBackup()>7*864e5;
 }
 async function exportBackup(){
-  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,foodGoals:getFoodGoals(),macroTemplates:getTpls(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})()};
+  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,foodGoals:getFoodGoals(),macroTemplates:getTpls(),workoutTemplates:getWT(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})()};
   const name="gym-backup-"+today()+".json";
   const blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
   let done=false;
@@ -567,6 +588,7 @@ function importBackup(file){
       let added=0;
       if(d.foodGoals&&!lsGet(FGKEY))lsSet(FGKEY,JSON.stringify(d.foodGoals));
       if(d.macroTemplates&&!lsGet(TKEY))lsSet(TKEY,JSON.stringify(d.macroTemplates));
+      if(Array.isArray(d.workoutTemplates)){const cur=getWT();for(const t of d.workoutTemplates)if(t&&t.id&&!cur.some(x=>x.id===t.id))cur.push(t);saveWT(cur)}
       if(d.water&&typeof d.water==="object"){let m={};try{m=JSON.parse(lsGet(WAKEY)||"{}")}catch(e){}lsSet(WAKEY,JSON.stringify(Object.assign({},d.water,m)))}
       for(const kind of ["workouts","content","food"])for(const item of (d[kind]||[])){
         if(!item||typeof item!=="object"||!item.id)continue;
@@ -842,7 +864,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.5.6";
+const APP_VERSION="1.6.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1171,6 +1193,7 @@ function viewTrain(){
      '<button class="streak'+(si.total?'':' cold')+'" data-act="streak"><span class="row1">'+FLAME+si.total+'</span><small>'+(si.total===1?'dag':'dagen')+' getraind</small></button></div><div class="week">'+strip+'</div></div>';
   h+='<div class="stats"><div class="stat"><b>'+month+'</b><span>deze maand</span></div><div class="stat"><b>'+kShort(weekVol)+'</b><span>kg volume</span></div><div class="stat"><b>'+lastTxt+'</b><span>laatste training</span></div></div>';
   h+='<button class="btn primary block big" data-act="newWorkout">+ Nieuwe training</button>';
+  h+=tplCards();
   // PRs
   const prs=recentPRs();
   if(prs.length){h+='<div class="section-label">Recente records 🏆</div><div class="list">'+prs.map(p=>'<div class="li"><div><b>'+esc(p.name)+'</b><span>'+esc(fmtDate(p.date,{day:"numeric",month:"short"}))+'</span></div><div class="pr"><b>'+fmtKg(p.max)+' kg</b><span>+'+fmtKg(p.diff)+' kg</span></div></div>').join("")+'</div>'}
@@ -1293,7 +1316,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
-  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():sheetContent();
+  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
 
@@ -1306,7 +1329,7 @@ function loadExercises(){
   return fetch("exercises.json").then(r=>r.json()).then(list=>{
     EX=list.map(([id,name,group,muscle,pop])=>({id,name,group,muscle,pop:!!pop}));
     for(const e of EX){EXBY[e.id]=e;const k=norm(e.name);if(!EXNAME[k])EXNAME[k]=e}
-    if(S.sheet==="workout")renderSheet();
+    render();if(S.sheet==="workout"||S.sheet==="wtpl")renderSheet();
   }).catch(()=>{});
 }
 const exImg=(e,n)=>e.pop?"img/ex/"+e.id+"_"+n+".jpg":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/"+encodeURIComponent(e.id).replace(/%2F/g,"/")+"/"+n+".jpg";
@@ -1323,6 +1346,8 @@ function sheetWorkout(){
   h+='<div class="field"><input data-f="name" list="wNames" placeholder="Naam van je training, bv. Push" value="'+esc(d.name)+'" autocomplete="off"></div>';
   h+='<div class="seg wk-names">'+WNAMES.map(n=>'<button data-act="wname" data-v="'+n+'" class="'+(norm(d.name)===norm(n)?"on":"")+'">'+n+'</button>').join("")+'</div>';
   const prevW=lastWorkoutNamed(d.name,d.id);
+  const wts=getWT();
+  if(wts.length&&!(d.exercises||[]).length)h+='<div class="section-label" style="margin-top:4px">Start vanuit schema</div><div class="seg tpl-pick">'+wts.map(t=>'<button data-act="loadTpl" data-id="'+esc(t.id)+'">'+esc(t.name)+' <small>'+(t.exercises||[]).length+'</small></button>').join("")+'</div>';
   if(prevW&&!(d.exercises||[]).some(e=>(e.name||"").trim()))
     h+='<button class="copybox" data-act="copyPrev">↻ Kopieer vorige “'+esc(prevW.name)+'” ('+esc(fmtDate(prevW.date,{day:"numeric",month:"short"}))+')</button>';
   if(!(d.exercises||[]).length){
@@ -1346,9 +1371,53 @@ function sheetWorkout(){
   });
   if((d.exercises||[]).length)h+='<button class="btn primary block big" data-act="addEx">+ Oefening toevoegen</button>';
   h+='<div class="field" style="margin-top:14px"><label>Notitie</label><textarea data-f="note" placeholder="Hoe voelde het? Energie, slaap, pijntjes…">'+esc(d.note)+'</textarea></div>';
+  if((d.exercises||[]).length){const linked=getWT().find(t=>t.id===d.tplId)||getWT().find(t=>norm(t.name)===norm(d.name));
+    h+='<button class="btn block" data-act="saveAsTpl" style="margin-top:10px">💾 '+(linked?'Schema “'+esc(linked.name)+'” bijwerken met deze oefeningen':'Opslaan als schema'+(d.name?' “'+esc(d.name)+'”':''))+'</button>'}
   if(!isNew)h+='<button class="btn danger block" data-act="delWorkout" style="margin-top:10px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Training verwijderen")+'</button>';
   return h+'</div>';
 }
+/* ---------- schema's (opgeslagen trainingen) ---------- */
+const WTKEY="gym_wtpl";
+const getWT=()=>{try{const l=JSON.parse(lsGet(WTKEY)||"[]");return Array.isArray(l)?l:[]}catch(e){return []}};
+const saveWT=l=>lsSet(WTKEY,JSON.stringify(l));
+function workoutFromTpl(t){
+  return {id:uid(),date:today(),name:t.name,note:"",tplId:t.id,exercises:(t.exercises||[]).map(e=>({name:e.name,exId:e.exId,sets:Array.from({length:Math.max(1,e.sets||3)},()=>blankSet())}))};
+}
+function tplCards(){
+  const l=getWT();
+  let h='<div class="section-label">Mijn schema’s</div><div class="wt-row">';
+  h+=l.map(t=>{const ex=(t.exercises||[]),th=ex.slice(0,3).map(e=>exThumb(exFor(e),"wt-th")).join("");
+    return '<div class="wt-card"><button class="wt-main" data-act="startTpl" data-id="'+esc(t.id)+'"><div class="wt-ths">'+th+'</div><b>'+esc(t.name)+'</b><span>'+ex.length+(ex.length===1?' oefening':' oefeningen')+'</span><em>▶ Start</em></button>'+
+      '<button class="wt-edit" data-act="editTpl" data-id="'+esc(t.id)+'" aria-label="Schema bewerken">✎</button></div>'}).join("");
+  h+='<button class="wt-card wt-new" data-act="newTpl"><i>+</i><b>Nieuw schema</b><span>bv. Push, Pull of Legs</span></button></div>';
+  return h;
+}
+function sheetTpl(){
+  const d=S.draft,isNew=!getWT().some(t=>t.id===d.id);
+  let h='<div class="sheet-head"><button class="link" data-act="close">Annuleer</button><h2>'+(isNew?"Nieuw schema":"Schema bewerken")+'</h2><button class="save" data-act="saveTpl">Opslaan</button></div><div class="sheet-body">';
+  h+='<div class="field"><label>Naam</label><input data-f="name" placeholder="bv. Push" value="'+esc(d.name)+'" autocomplete="off"></div>';
+  h+='<div class="seg wk-names">'+WNAMES.map(n=>'<button data-act="wname" data-v="'+n+'" class="'+(norm(d.name)===norm(n)?"on":"")+'">'+n+'</button>').join("")+'</div>';
+  if(!d.exercises.length)h+='<button class="ex-empty" data-act="addEx"><span class="ee-ic">'+ICON.train+'</span><b>Voeg oefeningen toe</b><span>Kies ze één keer, daarna staan ze altijd klaar</span></button>';
+  d.exercises.forEach((ex,i)=>{
+    h+='<div class="ex tpl-ex"><div class="ex-head"><button class="exph-btn" data-act="exInfo" data-i="'+i+'">'+exThumb(exFor(ex),"exph")+'</button>'+
+      '<div class="ex-meta"><b>'+esc(ex.name)+'</b><span>'+ex.sets+' sets</span></div>'+
+      '<div class="tpl-ord"><button data-act="tplUp" data-i="'+i+'" aria-label="Omhoog"'+(i?'':' disabled')+'>▲</button><button data-act="tplDown" data-i="'+i+'" aria-label="Omlaag"'+(i<d.exercises.length-1?'':' disabled')+'>▼</button></div></div>'+
+      '<div class="tpl-ctl"><span class="small muted">Aantal sets</span><div class="stepper"><button data-act="tplSets" data-i="'+i+'" data-d="-1">−</button><input value="'+ex.sets+'" readonly><button data-act="tplSets" data-i="'+i+'" data-d="1">+</button></div>'+
+      '<button class="iconbtn" data-act="delEx" data-i="'+i+'" aria-label="Verwijder">'+ICON.trash+'</button></div></div>';
+  });
+  if(d.exercises.length)h+='<button class="btn primary block big" data-act="addEx">+ Oefening toevoegen</button>';
+  if(!isNew)h+='<button class="btn danger block" data-act="delTpl" style="margin-top:14px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Schema verwijderen")+'</button>';
+  return h+'</div>';
+}
+function saveAsTpl(d,silent){
+  const name=(d.name||"").trim()||"Mijn schema";
+  const ex=(d.exercises||[]).filter(e=>(e.name||"").trim()).map(e=>({name:e.name.trim(),exId:e.exId,sets:Array.isArray(e.sets)?Math.max(1,e.sets.length):Math.max(1,num(e.sets)||3)}));
+  if(!ex.length){toast("Voeg eerst oefeningen toe");return false}
+  const l=getWT();let t=l.find(x=>x.id===d.tplId)||l.find(x=>norm(x.name)===norm(name));
+  if(t){t.name=name;t.exercises=ex}else{t={id:uid(),name,exercises:ex};l.push(t)}
+  saveWT(l);d.tplId=t.id;if(!silent)toast("Schema “"+name+"” opgeslagen 💾");return true;
+}
+
 /* picker overlay (boven het trainingsscherm) */
 const PK={group:"Populair",q:"",replace:null};
 function recentExercises(){
@@ -1383,6 +1452,9 @@ function renderPicker(){
 function pickExercise(it){
   const d=S.draft;if(!d)return;
   const entry={name:it.name,exId:it.e?it.e.id:undefined};
+  if(S.sheet==="wtpl"){if(PK.replace!=null&&d.exercises[PK.replace])Object.assign(d.exercises[PK.replace],entry);else d.exercises.push(Object.assign(entry,{sets:3}));
+    const idx=PK.replace!=null?PK.replace:d.exercises.length-1;closePicker();renderSheet();
+    setTimeout(()=>{const box=document.querySelectorAll("#sheet .ex")[idx];if(box)box.scrollIntoView({block:"center",behavior:"smooth"})},60);return}
   if(PK.replace!=null&&d.exercises[PK.replace]){Object.assign(d.exercises[PK.replace],entry)}
   else{const prev=lastTimeFor(it.name,d.id,d.date);const n=prev?Math.max(1,prev.ex.sets.length):3;d.exercises.push(Object.assign(entry,{sets:Array.from({length:n},()=>blankSet())}))}
   const idx=PK.replace!=null?PK.replace:d.exercises.length-1;
@@ -1439,6 +1511,17 @@ document.addEventListener("click",async ev=>{
   switch(act){
     case "newWorkout":openSheet("workout",{id:uid(),date:today(),name:"",note:"",exercises:[]});break;
     case "wname":d.name=a.dataset.v;renderSheet();break;
+    case "startTpl":{const t=getWT().find(x=>x.id===a.dataset.id);if(t){openSheet("workout",workoutFromTpl(t));toast("“"+t.name+"” geladen, vul je gewicht en reps in")}break}
+    case "loadTpl":{const t=getWT().find(x=>x.id===a.dataset.id);if(t){const w=workoutFromTpl(t);d.name=w.name;d.tplId=t.id;d.exercises=w.exercises;renderSheet()}break}
+    case "newTpl":openSheet("wtpl",{id:uid(),name:"",exercises:[]});break;
+    case "editTpl":{const t=getWT().find(x=>x.id===a.dataset.id);if(t)openSheet("wtpl",clone(t));break}
+    case "tplSets":{const ex=d.exercises[+a.dataset.i];ex.sets=Math.max(1,Math.min(10,num(ex.sets)+(+a.dataset.d)));renderSheet();break}
+    case "tplUp":case "tplDown":{const i=+a.dataset.i,j=act==="tplUp"?i-1:i+1;if(j<0||j>=d.exercises.length)break;[d.exercises[i],d.exercises[j]]=[d.exercises[j],d.exercises[i]];renderSheet();break}
+    case "saveTpl":{if(!(d.name||"").trim()){toast("Geef je schema een naam");break}
+      const l=getWT(),ex=d.exercises.map(e=>({name:e.name,exId:e.exId,sets:num(e.sets)||3}));if(!ex.length){toast("Voeg eerst oefeningen toe");break}
+      const i=l.findIndex(x=>x.id===d.id);const t={id:d.id,name:d.name.trim(),exercises:ex};if(i>=0)l[i]=t;else l.push(t);saveWT(l);closeSheet();render();toast("Schema “"+t.name+"” opgeslagen 💾");break}
+    case "delTpl":{if(!S.confirmDel){S.confirmDel=true;renderSheet();break}saveWT(getWT().filter(x=>x.id!==d.id));closeSheet();render();toast("Schema verwijderd");break}
+    case "saveAsTpl":if(saveAsTpl(d))renderSheet();break;
     case "exInfo":exInfo(+a.dataset.i);break;
     case "editWorkout":{const w=S.workouts.find(x=>x.id===a.dataset.id);if(w)openSheet("workout",clone(w));break}
     case "newContent":openSheet("content",{id:uid(),title:"",hook:"",status:"Idee",format:"Reel",platform:"Instagram",date:"",notes:""});break;
