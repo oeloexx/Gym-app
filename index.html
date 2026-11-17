@@ -253,7 +253,14 @@ nav.tabs svg{width:24px;height:24px}
 #welcome.lit .ember{animation:ember linear infinite}
 @keyframes ember{0%{opacity:0;transform:translate(0,0)}10%{opacity:.9}80%{opacity:.5}100%{opacity:0;transform:translate(var(--dx),-105vh)}}
 .wl-content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--sat) + 40px) 28px calc(var(--sab) + 32px)}
-.wl-top{color:rgba(255,236,220,.7);font-size:14px;font-weight:500;letter-spacing:.3px;text-transform:capitalize;opacity:0}
+.wl-top{display:flex;align-items:center;justify-content:space-between;opacity:0}
+.wl-date{display:flex;align-items:center;gap:12px;padding:8px 16px 8px 8px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,200,150,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.wl-day{width:52px;height:56px;border-radius:14px;background:linear-gradient(160deg,#ffb26b,#e3ff6a);color:#1a1000;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(255,150,70,.35)}
+.wl-day small{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.75;line-height:1}
+.wl-day b{font-family:Archivo,Inter,sans-serif;font-size:26px;font-weight:800;line-height:1.05}
+.wl-dtxt b{display:block;font-family:"Kaushan Script",cursive;font-weight:400;font-size:24px;line-height:1.15;color:#ffe6d2}
+.wl-dtxt span{font-size:13px;color:rgba(255,236,220,.6);font-weight:500}
+.wl-wk{font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#ffcfa3;padding:7px 11px;border-radius:999px;background:rgba(255,140,60,.12);border:1px solid rgba(255,170,100,.2)}
 .wl-greet{font-family:Archivo,Inter,sans-serif;font-size:26px;font-weight:700;color:#ffe6d2;opacity:0}
 .wl-name-wrap{filter:drop-shadow(0 6px 26px rgba(255,140,60,.38))}
 .wl-name{font-family:"Kaushan Script",cursive;font-size:clamp(68px,20vw,104px);line-height:1.05;margin:0 0 -12px -4px;padding:4px 8px 24px 4px;
@@ -557,6 +564,11 @@ function nextQuote(){
   }
   const q=QUOTES[st.order[st.i]];st.i++;lsSet(QKEY,JSON.stringify(st));return q;
 }
+function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const n=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-n);const y=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y)/864e5+1)/7)}
+function dateBlock(){const d=new Date();
+  return '<div class="wl-date"><div class="wl-day"><small>'+esc(d.toLocaleDateString("nl-NL",{month:"short"}).replace(".",""))+'</small><b>'+d.getDate()+'</b></div>'+
+    '<div class="wl-dtxt"><b>'+esc((w=>w.charAt(0).toUpperCase()+w.slice(1))(d.toLocaleDateString("nl-NL",{weekday:"long"})))+'</b><span>'+esc(d.toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"}))+'</span></div></div>'+
+    '<div class="wl-wk">Week '+isoWeek(d)+'</div>'}
 function greeting(){const h=new Date().getHours();return h<6?"Goedenacht":h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond"}
 function weekStats(){
   const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
@@ -586,7 +598,7 @@ function showWelcome(force){
   const date=new Date().toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"});
   const st=weekStats();
   el.innerHTML='<div class="wl-bg"></div><div class="wl-glow"></div><div class="wl-burst"></div>'+embers()+LOGO+
-    '<div class="wl-content"><div class="wl-top">'+esc(date)+'</div>'+
+    '<div class="wl-content"><div class="wl-top">'+dateBlock()+'</div>'+
     '<div><div class="wl-greet">'+greeting()+',</div><div class="wl-name-wrap"><div class="wl-name">'+esc(name)+'</div></div>'+
     '<div class="wl-quote"><span class="qm">“</span>'+esc(nextQuote())+'</div></div>'+
     '<div class="wl-bottom"><div class="wl-stats"><div class="wl-stat"><b>'+st.ws+'</b><span>'+(st.ws===1?"training":"trainingen")+' deze week</span></div>'+
@@ -693,7 +705,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.4.0";
+const APP_VERSION="1.4.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
