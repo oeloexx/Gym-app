@@ -122,12 +122,12 @@ body{background:transparent!important}
 .empty{text-align:center;color:var(--muted);padding:40px 20px}
 .empty .big{font-size:40px;margin-bottom:8px}
 nav.tabs{position:fixed;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(13,14,17,0),rgba(13,14,17,.94) 28%);padding:14px 14px calc(var(--sab) + 10px);display:flex;justify-content:center;z-index:20}
-nav.tabs .in{display:flex;gap:8px;max-width:560px;width:100%}
+nav.tabs .in{display:flex;gap:6px;max-width:560px;width:100%}
 nav.tabs button{flex:1 1 0;min-width:0;height:58px;display:flex;align-items:center;justify-content:center;gap:0;border-radius:18px;
   background:rgba(31,34,41,.92);border:1px solid rgba(255,255,255,.06);color:#9aa0aa;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   transition:flex-grow .4s cubic-bezier(.3,.8,.2,1),background .3s,color .3s,box-shadow .3s,gap .3s}
 nav.tabs button:active{transform:scale(.96)}
-nav.tabs button.on{flex-grow:2.6;gap:8px;color:#00151b;border-color:transparent;background:linear-gradient(100deg,#22d3ee,#e6fbff);box-shadow:0 8px 22px rgba(34,211,238,.3)}
+nav.tabs button.on{flex-grow:2.3;gap:8px;color:#00151b;border-color:transparent;background:linear-gradient(100deg,#22d3ee,#e6fbff);box-shadow:0 8px 22px rgba(34,211,238,.3)}
 nav.tabs button span{max-width:0;opacity:0;overflow:hidden;white-space:nowrap;font-family:Archivo,Inter,sans-serif;font-weight:800;font-size:15px;transition:max-width .4s cubic-bezier(.3,.8,.2,1),opacity .25s}
 nav.tabs button.on span{max-width:130px;opacity:1;transition-delay:0s,.12s}
 nav.tabs svg{width:24px;height:24px;flex:none}
@@ -285,6 +285,56 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .mv b small{font-family:Inter;font-weight:500;font-size:11px;color:var(--muted);margin-left:1px}
 .mv span{font-size:11px;color:var(--muted);white-space:nowrap}
 @media (max-width:370px){.mr{width:34px;height:34px}.mr .mi{left:9px;top:9px;width:16px;height:16px}.mv b{font-size:14px}}
+/* barcodescanner */
+.fsearch{display:flex;gap:8px}.fsearch input{flex:1}
+.scanbtn{flex:none;width:48px;border-radius:12px;background:linear-gradient(135deg,#22d3ee,#e6fbff);color:#00151b;display:flex;align-items:center;justify-content:center}
+.scanbtn svg{width:24px;height:24px}
+#scanner{position:fixed;inset:0;z-index:90;background:#000;display:none}
+#scanner.open{display:block}
+#scanner video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sc-shade{position:absolute;inset:0;background:radial-gradient(ellipse 72% 22% at 50% 44%,transparent 98%,rgba(0,0,0,.55) 100%)}
+.sc-frame{position:absolute;left:12%;right:12%;top:34%;height:20%;border-radius:18px;border:3px solid #22d3ee;box-shadow:0 0 0 2px rgba(0,0,0,.3),0 0 30px rgba(34,211,238,.5)}
+.sc-frame i{position:absolute;left:6%;right:6%;top:50%;height:2px;background:#22d3ee;box-shadow:0 0 12px #22d3ee;animation:scanl 1.6s ease-in-out infinite}
+@keyframes scanl{0%,100%{transform:translateY(-38px)}50%{transform:translateY(38px)}}
+.sc-top{position:absolute;left:0;right:0;top:0;padding:calc(var(--sat) + 10px) 16px 10px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);font-weight:700}
+.sc-top button{color:#9be7f7;font-weight:700;width:70px;text-align:left}
+.sc-msg{position:absolute;left:0;right:0;top:57%;text-align:center;font-weight:600;color:#e8f9ff;text-shadow:0 1px 6px #000;padding:0 24px}
+.sc-bottom{position:absolute;left:0;right:0;bottom:0;padding:16px 16px calc(var(--sab) + 20px);background:linear-gradient(0deg,rgba(0,0,0,.85),transparent);display:flex;flex-direction:column;gap:10px}
+.sc-btn{display:block;text-align:center;padding:13px;border-radius:14px;background:rgba(255,255,255,.12);font-weight:700}
+.sc-type{display:flex;gap:8px}.sc-type input{flex:1;background:rgba(255,255,255,.1)}
+.sc-type button{padding:0 16px;border-radius:12px;background:linear-gradient(135deg,#22d3ee,#e6fbff);color:#00151b;font-weight:800}
+/* doel behaald */
+.gbadge{font-style:normal;display:inline-block;margin-left:6px;padding:3px 8px;border-radius:8px;background:linear-gradient(100deg,#22d3ee,#a5f3fc);color:#00151b;font-size:11px;font-weight:800;letter-spacing:0;text-transform:none;vertical-align:1px}
+.gbadge.sm{font-size:10px;padding:2px 7px;vertical-align:2px}
+.water.goal{background:linear-gradient(160deg,rgba(34,211,238,.28),rgba(8,51,68,.65));border:1px solid rgba(34,211,238,.55)!important;box-shadow:0 0 24px rgba(34,211,238,.18)}
+.water.goal .hero-label{color:#e8f9ff}
+.meal.done{border:1px solid rgba(34,211,238,.45)!important;background:linear-gradient(160deg,rgba(34,211,238,.14),rgba(24,26,32,.78) 60%)}
+.meal-e{position:relative}
+.mcheck{position:absolute;right:-6px;bottom:-4px;width:16px;height:16px;border-radius:50%;background:#22d3ee;color:#00151b;font-style:normal;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #0b0c0f}
+.sheet-head h2{max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* metingen */
+.mbtns{margin-bottom:12px}.mbtns .btn{cursor:pointer}
+.mintro{text-align:center;padding:22px 18px}.mintro .big{font-size:40px}.mintro b{font-family:Archivo;font-size:18px;display:block;margin:6px 0}.mintro p{color:var(--muted);font-size:14px;line-height:1.5;margin:0}
+.mhero .mthumb{width:40px;height:40px;border-radius:10px;object-fit:cover}
+.mbig{font-family:"Kaushan Script",cursive;font-size:58px;line-height:1.1;padding:2px 8px 6px 0;background:linear-gradient(100deg,#ffffff,#38bdf8 50%,#e6fbff);-webkit-background-clip:text;background-clip:text;color:transparent;display:flex;align-items:baseline;gap:8px}
+.mbig small{font-size:22px}
+.mbig em{font-family:Archivo,Inter,sans-serif;font-style:normal;font-size:14px;font-weight:800;padding:4px 8px;border-radius:9px;-webkit-text-fill-color:initial;color:#00151b;background:#22d3ee}
+.mbig em.up{background:rgba(255,255,255,.85)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.mchips span{font-size:12px;color:var(--muted);background:rgba(255,255,255,.05);border-radius:10px;padding:6px 9px}
+.mchips b{display:block;color:#fff;font-family:Archivo;font-size:15px}
+.card.mrowc{display:flex;gap:12px;align-items:center}
+.mrowc img,.mrowc .mph{width:48px;height:48px;border-radius:12px;object-fit:cover;flex:none;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.mrowc b{display:block;font-weight:700;text-transform:capitalize}.mrowc span{font-size:12px;color:var(--muted)}
+.mscan{position:relative;border-radius:16px;overflow:hidden;margin-bottom:12px;background:#000}
+.mscan img{display:block;width:100%;max-height:220px;object-fit:contain}
+.mstat{padding:10px 12px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.mstat.busy{background:rgba(34,211,238,.15);color:#bff3fd}.mstat.ok{background:rgba(34,211,238,.22);color:#e8f9ff}.mstat.err{background:rgba(255,92,92,.15);color:#ffb4b4}
+.spin{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(34,211,238,.3);border-top-color:#22d3ee;animation:spin .8s linear infinite;flex:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.mgrid label span{font-weight:500;opacity:.7}
+.mgrid .auto input{border-color:#22d3ee;background:rgba(34,211,238,.1)}
 /* voeding */
 .wbtns{display:flex;gap:6px;margin-top:10px}
 .wbtns button{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:12px;background:rgba(51,154,240,.12);border:1px solid rgba(51,154,240,.25);color:#8ec5ff;font-weight:700;font-size:13px}
@@ -537,6 +587,7 @@ const daysAgo=s=>Math.round((toD(today())-toD(s))/864e5);
 const ICON={
   train:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></svg>',
   prog:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 16l4-5 4 3 6-8"/></svg>',
+  meas:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="4"/><path d="M8.5 10a3.5 3.5 0 0 1 7 0"/><path d="M12 10l1.5-1.8"/></svg>',
   food:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v7a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M9 12v9M17 21V3c-2.2 0-3.5 2.5-3.5 6s1.3 5 3.5 5"/></svg>',
   content:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="2.5"/><path d="M16 10.5l5-3v9l-5-3"/></svg>',
   trash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>',
@@ -549,10 +600,10 @@ const FORMATS=["Reel","TikTok","Short","Carrousel","Foto","Story","Lange video"]
 const PLATFORMS=["Instagram","TikTok","YouTube","Meerdere"];
 
 /* ---------- state ---------- */
-const S={tab:"train",workouts:[],content:[],food:[],foodDate:null,mode:"loading",slow:false,err:null,
+const S={tab:"train",workouts:[],content:[],food:[],measure:[],measMetric:null,foodDate:null,mode:"loading",slow:false,err:null,
   sheet:null,draft:null,confirmDel:false,filter:"Alles",progEx:null,metric:"max"};
 try{const t=sessionStorage.getItem("gym_tab");if(t)S.tab=t}catch(e){}
-if(["train","prog","food","content"].includes(location.hash.slice(1)))S.tab=location.hash.slice(1);
+if(["train","prog","meas","food","content"].includes(location.hash.slice(1)))S.tab=location.hash.slice(1);
 
 /* ---------- storage ---------- */
 const LKEY="gym_app_v1";
@@ -573,10 +624,10 @@ const Store={
     },err=>{done=true;clearTimeout(timer);S.err="Gegevens konden niet geladen worden ("+(err&&err.code||"fout")+").";render()});
   },
   loadLocal(){
-    try{const d=JSON.parse(localStorage.getItem(LKEY)||"{}");S.workouts=d.workouts||[];S.content=d.content||[];S.food=d.food||[]}catch(e){}
+    try{const d=JSON.parse(localStorage.getItem(LKEY)||"{}");S.workouts=d.workouts||[];S.content=d.content||[];S.food=d.food||[];S.measure=d.measure||[]}catch(e){}
   },
   persist(){
-    try{localStorage.setItem(LKEY,JSON.stringify({workouts:S.workouts,content:S.content,food:S.food}))}catch(e){}
+    try{localStorage.setItem(LKEY,JSON.stringify({workouts:S.workouts,content:S.content,food:S.food,measure:S.measure}))}catch(e){}
   },
   async save(kind,obj){
     obj=clone(obj);const id=obj.id;delete obj.id;
@@ -607,7 +658,7 @@ function needsBackup(){
   return Date.now()-getLastBackup()>7*864e5;
 }
 async function exportBackup(){
-  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,foodGoals:getFoodGoals(),macroTemplates:getTpls(),workoutTemplates:getWT(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})(),waterLog:waterLogAll()};
+  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,measure:S.measure,foodGoals:getFoodGoals(),macroTemplates:getTpls(),workoutTemplates:getWT(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})(),waterLog:waterLogAll()};
   const name="gym-backup-"+today()+".json";
   const blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
   let done=false;
@@ -631,7 +682,7 @@ function importBackup(file){
       if(Array.isArray(d.workoutTemplates)){const cur=getWT();for(const t of d.workoutTemplates)if(t&&t.id&&!cur.some(x=>x.id===t.id))cur.push(t);saveWT(cur)}
       if(d.waterLog&&typeof d.waterLog==="object"){const cur=waterLogAll();for(const k in d.waterLog)if(!cur[k]&&Array.isArray(d.waterLog[k]))cur[k]=d.waterLog[k];lsSet(WLKEY,JSON.stringify(cur));waterLog.cache=null}
       if(d.water&&typeof d.water==="object"){let m={};try{m=JSON.parse(lsGet(WAKEY)||"{}")}catch(e){}lsSet(WAKEY,JSON.stringify(Object.assign({},d.water,m)))}
-      for(const kind of ["workouts","content","food"])for(const item of (d[kind]||[])){
+      for(const kind of ["workouts","content","food","measure"])for(const item of (d[kind]||[])){
         if(!item||typeof item!=="object"||!item.id)continue;
         const i=S[kind].findIndex(x=>x.id===item.id);
         if(i>=0)S[kind][i]=item;else{S[kind].push(item);added++}
@@ -905,7 +956,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.8.1";
+const APP_VERSION="1.9.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1012,8 +1063,8 @@ function viewFood(){
     const items=S.food.filter(e=>e.date===d&&e.meal===m).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
     const tt=items.reduce((a,e)=>{a.k+=num(e.kcal);a.p+=num(e.p);a.c+=num(e.c);a.f+=num(e.f);return a},{k:0,p:0,c:0,f:0});
     const open=!!(S.mealOpen&&S.mealOpen[m]);
-    h+='<div class="meal'+(open?' open':'')+'"><button class="meal-top" data-act="mealToggle" data-meal="'+m+'">'+
-       '<span class="meal-e">'+MEMO[m][0]+'</span><span class="meal-t"><b>'+m+'</b><span>'+items.length+(items.length===1?' item':' items')+'</span></span>'+
+    h+='<div class="meal done'+(open?' open':'')+'"><button class="meal-top" data-act="mealToggle" data-meal="'+m+'">'+
+       '<span class="meal-e">'+MEMO[m][0]+'<i class="mcheck">✓</i></span><span class="meal-t"><b>'+m+' <em class="gbadge sm">Ingevuld</em></b><span>'+items.length+(items.length===1?' item':' items')+'</span></span>'+
        '<span class="meal-k"><b>'+tt.k+'</b> kcal</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>'+
        '<div class="meal-mac"><span><i style="background:#ff6b3d"></i>Eiwit <b>'+Math.round(tt.p)+'g</b></span><span><i style="background:#e64980"></i>Koolh. <b>'+Math.round(tt.c)+'g</b></span><span><i style="background:#339af0"></i>Vet <b>'+Math.round(tt.f)+'g</b></span></div>';
     if(!open){h+='</div>';continue}
@@ -1026,7 +1077,8 @@ function viewFood(){
     glasses+='<span class="glass'+(f>0?" on":"")+'"><svg viewBox="0 0 24 24"><defs><clipPath id="gc'+i+'"><rect x="0" y="'+(21.7-12.7*f).toFixed(2)+'" width="24" height="24"/></clipPath></defs>'+GL+'<path class="wf" clip-path="url(#gc'+i+')" d="M7.2 9h9.6l-1.1 11.2a.6.6 0 0 1-.6.5H8.9a.6.6 0 0 1-.6-.5z"/></svg></span>'}
   const extra=Math.max(0,full-g.water);
   const nb=wl.filter(x=>x===BOTTLE_ML).length,ng=wl.filter(x=>x===GLASS_ML).length;
-  h+='<div class="water card" style="cursor:default"><div class="row between"><span class="hero-label">💧 Water</span><span class="small"><b>'+fmtL(wml)+'</b><span class="muted"> / '+fmtL(g.waterMl)+' L</span></span></div>'+
+  const wdone=wml>=g.waterMl;
+  h+='<div class="water card'+(wdone?' goal':'')+'" style="cursor:default"><div class="row between"><span class="hero-label">💧 Water'+(wdone?' <em class="gbadge">✓ Doel behaald</em>':'')+'</span><span class="small"><b>'+fmtL(wml)+'</b><span class="muted"> / '+fmtL(g.waterMl)+' L</span></span></div>'+
      '<div class="glasses">'+glasses+(extra?'<span class="wextra">+'+extra+'</span>':'')+'</div>'+
      '<div class="wbtns"><button data-act="addWater" data-ml="'+GLASS_ML+'"><svg viewBox="0 0 24 24">'+GL+'</svg>+ Glas <small>250 ml</small></button>'+
      '<button data-act="addWater" data-ml="'+BOTTLE_ML+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M10 2h4v3l1.5 2.5V21a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V7.5L10 5z"/><path d="M8.5 11h7"/></svg>+ Fles <small>600 ml</small></button>'+
@@ -1060,8 +1112,8 @@ function sheetFood(){
   const head=(title,right)=>'<div class="sheet-head"><button class="link" data-act="'+(d.mode!=="search"&&!d.editId?"foodBack":"close")+'">'+(d.mode!=="search"&&!d.editId?"‹ Terug":"Annuleer")+'</button><h2>'+title+'</h2>'+(right||'<span style="width:60px"></span>')+'</div><div class="sheet-body">';
   const mealSeg='<div class="seg" style="margin-bottom:14px">'+MEALS.map(m=>'<button data-seg="meal" data-v="'+m+'" class="'+(d.meal===m?"on":"")+'">'+m+'</button>').join("")+'</div>';
   if(d.mode==="search"){
-    return head("Toevoegen")+mealSeg+'<input id="foodQ" type="search" placeholder="Zoek eten of drinken…" value="'+esc(d.q||"")+'" autocomplete="off">'+
-      '<button class="btn block" data-act="foodManual" style="margin-top:10px">✏️ Eigen product invoeren</button><div id="foodResults">'+foodResults(d.q||"")+'</div></div>';
+    return head("Toevoegen")+mealSeg+'<div class="fsearch"><input id="foodQ" type="search" placeholder="Zoek eten of drinken…" value="'+esc(d.q||"")+'" autocomplete="off"><button class="scanbtn" data-act="scan" aria-label="Barcode scannen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2M8 8v8M11 8v8M14 8v8M17 8v8"/></svg></button></div>'+
+      '<div class="grid2" style="margin-top:10px"><button class="btn" data-act="scan">📷 Scan barcode</button><button class="btn" data-act="foodManual">✏️ Eigen product</button></div><div id="foodResults">'+foodResults(d.q||"")+'</div></div>';
   }
   if(d.mode==="detail"){
     const it=d.item,v=calc(it.per100,num(d.grams));
@@ -1098,7 +1150,7 @@ function getTpls(){
 const saveTpls=t=>lsSet(TKEY,JSON.stringify(t));
 const activeTpl=()=>{const t=getTpls();return t.list.find(x=>x.id===t.active)};
 const getFoodGoals=()=>{let o={};try{o=JSON.parse(lsGet(FGKEY)||"{}")||{}}catch(e){}
-  const waterMl=o.waterMl||(o.water||8)*GLASS_ML;
+  const waterMl=o.waterMl||(o.water?o.water*GLASS_ML:3000);
   const a=activeTpl();return {kcal:kcalOf(a.p,a.c,a.f),p:num(a.p),c:num(a.c),f:num(a.f),waterMl,water:Math.max(1,Math.round(waterMl/GLASS_ML)),name:a.name}};
 function setWaterGoal(ml){let o={};try{o=JSON.parse(lsGet(FGKEY)||"{}")}catch(e){}o.waterMl=ml;delete o.water;lsSet(FGKEY,JSON.stringify(o))}
 const MAC=[["p","Eiwit",4,"#ff6b3d"],["c","Koolhydraten",4,"#e64980"],["f","Vet",9,"#339af0"]];
@@ -1134,15 +1186,180 @@ function tplUpdate(key,val){
   const c=$("#sheet .tpl-chips .chip.on .n");if(c)c.textContent=L.k;
   render();
 }
+/* ---------- barcodescanner (Open Food Facts) ---------- */
+const BCKEY="gym_barcodes";
+const bcCache=()=>{try{return JSON.parse(lsGet(BCKEY)||"{}")||{}}catch(e){return {}}};
+function bcSave(code,item){const c=bcCache();c[code]=item;lsSet(BCKEY,JSON.stringify(c))}
+let zxLoading=null;
+function loadZX(){if(window.ZXing)return Promise.resolve();if(zxLoading)return zxLoading;
+  zxLoading=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="lib/zxing.min.js";sc.onload=res;sc.onerror=()=>{zxLoading=null;rej(new Error("laden mislukt"))};document.head.appendChild(sc)});return zxLoading}
+function zxHints(){const Z=window.ZXing,h=new Map();
+  h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.UPC_A,Z.BarcodeFormat.UPC_E,Z.BarcodeFormat.CODE_128]);
+  h.set(Z.DecodeHintType.TRY_HARDER,true);return h}
+let SCAN=null;
+async function openScanner(){
+  let el=$("#scanner");if(!el){el=document.createElement("div");el.id="scanner";document.body.appendChild(el)}
+  el.innerHTML='<video id="scVid" playsinline muted autoplay></video><div class="sc-shade"></div><div class="sc-frame"><i></i></div>'+
+    '<div class="sc-top"><button data-sc="close">Annuleer</button><span>Barcode scannen</span><span style="width:70px"></span></div>'+
+    '<div class="sc-msg" id="scMsg">Camera starten…</div>'+
+    '<div class="sc-bottom"><label class="sc-btn">📷 Foto van barcode<input type="file" accept="image/*" id="scFile" hidden></label>'+
+    '<form id="scForm" class="sc-type"><input id="scCode" inputmode="numeric" placeholder="Of typ de cijfers onder de barcode" autocomplete="off"><button>Zoek</button></form></div>';
+  el.classList.add("open");document.body.classList.add("lock");
+  try{await loadZX()}catch(e){$("#scMsg").textContent="Scanner kon niet laden. Typ de cijfers hieronder in.";return}
+  try{
+    const r=new ZXing.BrowserMultiFormatReader(zxHints(),300);SCAN={r,done:false};
+    $("#scMsg").textContent="Richt de camera op de barcode";
+    await r.decodeFromConstraints({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},"scVid",(res)=>{if(res&&SCAN&&!SCAN.done){SCAN.done=true;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}gotBarcode(res.getText())}});
+  }catch(e){$("#scMsg").textContent="Geen toegang tot de camera. Kies een foto of typ de cijfers.";}
+}
+function closeScanner(){try{SCAN&&SCAN.r&&SCAN.r.reset()}catch(e){}SCAN=null;const el=$("#scanner");if(el){el.classList.remove("open");el.innerHTML=""}if(!S.sheet)document.body.classList.remove("lock")}
+async function scanFromFile(file){
+  const m=$("#scMsg");if(m)m.textContent="Foto lezen…";
+  try{await loadZX();const url=URL.createObjectURL(file);const r=new ZXing.BrowserMultiFormatReader(zxHints());
+    const res=await r.decodeFromImageUrl(url);URL.revokeObjectURL(url);gotBarcode(res.getText())}
+  catch(e){if(m)m.textContent="Geen barcode gevonden op de foto. Probeer het dichterbij of typ de cijfers."}
+}
+async function gotBarcode(code){
+  code=String(code).replace(/\D/g,"");if(code.length<6){toast("Ongeldige barcode");return}
+  closeScanner();
+  const d=S.draft;if(!d||S.sheet!=="food")return;
+  const cached=bcCache()[code];
+  if(cached){applyScanned(code,cached,true);return}
+  toast("Product opzoeken…");
+  try{
+    const r=await fetch("https://world.openfoodfacts.org/api/v2/product/"+code+".json?fields=product_name,product_name_nl,brands,nutriments,serving_quantity,serving_size");
+    const j=await r.json();const p=j&&j.status===1&&j.product;const n=p&&p.nutriments||{};
+    let kcal=n["energy-kcal_100g"];if(kcal==null&&n.energy_100g!=null)kcal=n.energy_100g/4.184;
+    if(!p||kcal==null){notFound(code);return}
+    const name=[(p.product_name_nl||p.product_name||"Product").trim(),(p.brands||"").split(",")[0].trim()].filter(Boolean).join(" · ");
+    const item={name,per100:{kcal:Math.round(num(kcal)),p:r1(num(n.proteins_100g)),c:r1(num(n.carbohydrates_100g)),f:r1(num(n.fat_100g))},por:Math.round(num(p.serving_quantity))||100,u:""};
+    bcSave(code,item);applyScanned(code,item,false);
+  }catch(e){toast("Geen internet of product niet bereikbaar");notFound(code)}
+}
+function applyScanned(code,item,fromCache){
+  const d=S.draft;d.barcode=code;
+  if(item.per100){d.mode="detail";d.item=item;d.grams=item.por||100}
+  else{d.mode="manual";Object.assign(d,{name:item.name},item.fixed,{kcalManual:true})}
+  renderSheet();toast(fromCache?"Gevonden in je eigen producten ✓":"Gevonden: "+item.name);
+}
+function notFound(code){const d=S.draft;if(!d)return;d.barcode=code;d.mode="manual";d.name="";renderSheet();toast("Niet gevonden. Vul het één keer zelf in, dan herkent de app hem voortaan.")}
+document.addEventListener("click",ev=>{const b=ev.target.closest("[data-sc]");if(!b)return;ev.stopPropagation();if(b.dataset.sc==="close")closeScanner()},true);
+document.addEventListener("change",ev=>{if(ev.target.id==="scFile"&&ev.target.files&&ev.target.files[0])scanFromFile(ev.target.files[0])});
+document.addEventListener("submit",ev=>{if(ev.target.id==="scForm"){ev.preventDefault();const v=$("#scCode").value;if(v)gotBarcode(v)}});
+
 async function saveFoodEntry(){
   const d=S.draft;let e;
   if(d.mode==="detail"){const g=num(d.grams);if(!g){toast("Vul een hoeveelheid in");return false}
     e=Object.assign({name:d.item.name,grams:g,per100:d.item.per100},calc(d.item.per100,g))}
   else{const name=(d.name||"").trim();if(!name){toast("Geef het product een naam");return false}
     e={name,grams:null,per100:null,kcal:Math.round(num(d.kcal)),p:r1(num(d.p)),c:r1(num(d.c)),f:r1(num(d.f))}}
+  if(d.barcode&&!d.editId){const c=bcCache()[d.barcode];if(!c||!c.per100)bcSave(d.barcode,e.per100?{name:e.name,per100:e.per100,por:e.grams||100,u:""}:{name:e.name,fixed:{kcal:e.kcal,p:e.p,c:e.c,f:e.f}})}
   e.id=d.editId||uid();e.date=d.date;e.meal=d.meal;
   const old=d.editId&&S.food.find(x=>x.id===d.editId);e.createdAt=old&&old.createdAt||Date.now();
   await Store.save("food",e);return true;
+}
+
+/* ---------- metingen ---------- */
+const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vetpercentage","%",3,60],["muscle","Spiermassa","kg",15,120],["bmi","BMI","",12,60],
+  ["visceral","Visceraal vet","niveau",1,30],["water","Lichaamsvocht","%",30,80],["bone","Botmassa","kg",1,8],["bmr","BMR","kcal",800,4000],
+  ["metage","Metabole leeftijd","jaar",10,90],["protein","Eiwit","%",5,30],["waist","Taille","cm",40,200],["chest","Borst","cm",50,200],
+  ["arm","Arm","cm",15,70],["thigh","Bovenbeen","cm",30,100],["hip","Heup","cm",50,200]];
+const MF=Object.fromEntries(MFIELDS.map(f=>[f[0],f]));
+const AIKEY="gym_ai_key";
+const sortedMeasures=()=>S.measure.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
+const fmtM=(k,v)=>v==null||v===""?"–":(k==="bmr"||k==="metage"||k==="visceral"?Math.round(num(v)):fmtKg(num(v)))+(MF[k][2]&&MF[k][2]!=="niveau"?" "+MF[k][2]:"");
+function viewMeas(){
+  let h='<header class="top"><div><div class="hello">Lichaam & voortgang</div><h1>Metingen</h1></div>'+GEAR+'</header>';
+  h+='<div class="grid2 mbtns"><label class="btn primary big">📷 Scan foto<input type="file" accept="image/*" id="measFile" hidden></label><button class="btn big" data-act="measManual">✏️ Handmatig</button></div>';
+  const ms=sortedMeasures();
+  if(!ms.length){
+    h+='<div class="card mintro" style="cursor:default"><div class="big">📏</div><b>Houd je lichaam bij</b><p>Maak een foto of screenshot van je weegschaal-app, een InBody-uitdraai of je eigen notities met maten. De AI leest de waarden eruit, jij controleert ze en slaat ze op.</p></div>';
+    return h+aiHint();
+  }
+  const last=ms[0],prev=ms.find(m=>m!==last&&m.v&&m.v.weight!=null);
+  const w=last.v&&last.v.weight,dw=w!=null&&prev?num(w)-num(prev.v.weight):null;
+  h+='<div class="hero mhero"><div class="row between"><span class="hero-label">Laatste meting · '+esc(fmtDate(last.date,{day:"numeric",month:"short"}))+'</span>'+(last.photo?'<img class="mthumb" src="'+last.photo+'" alt="">':'')+'</div>'+
+     (w!=null?'<div class="mbig">'+fmtKg(num(w))+'<small> kg</small>'+(dw!=null&&Math.abs(dw)>=0.05?'<em class="'+(dw<0?"dn":"up")+'">'+(dw>0?"+":"−")+fmtKg(Math.abs(dw))+' kg</em>':'')+'</div>':'')+
+     '<div class="mchips">'+MFIELDS.filter(f=>f[0]!=="weight"&&last.v&&last.v[f[0]]!=null&&last.v[f[0]]!=="").slice(0,6).map(f=>'<span><b>'+fmtM(f[0],last.v[f[0]])+'</b>'+f[1]+'</span>').join("")+'</div></div>';
+  const avail=MFIELDS.filter(f=>S.measure.filter(m=>m.v&&m.v[f[0]]!=null&&m.v[f[0]]!=="").length>=1);
+  if(!S.measMetric||!avail.some(f=>f[0]===S.measMetric))S.measMetric=(avail[0]||MFIELDS[0])[0];
+  const pts=S.measure.filter(m=>m.v&&m.v[S.measMetric]!=null&&m.v[S.measMetric]!=="").slice().sort((a,b)=>a.date.localeCompare(b.date)).map(m=>({d:m.date,v:num(m.v[S.measMetric])}));
+  h+='<div class="chips" style="margin-top:6px">'+avail.map(f=>'<button class="chip '+(S.measMetric===f[0]?"on":"")+'" data-act="measMetric" data-k="'+f[0]+'">'+f[1]+'</button>').join("")+'</div>';
+  if(pts.length)h+='<div class="chart">'+chartSvg(pts)+'</div>';
+  h+='<div class="section-label">Geschiedenis</div>';
+  for(const m of ms){
+    const keys=MFIELDS.filter(f=>m.v&&m.v[f[0]]!=null&&m.v[f[0]]!=="");
+    h+='<button class="card mrowc" data-act="editMeas" data-id="'+esc(m.id)+'">'+(m.photo?'<img src="'+m.photo+'" alt="">':'<span class="mph">📏</span>')+
+      '<div><b>'+esc(fmtDate(m.date,{weekday:"short",day:"numeric",month:"long"}))+'</b><span>'+keys.slice(0,3).map(f=>f[1]+' '+fmtM(f[0],m.v[f[0]])).join(" · ")+(keys.length>3?' · +'+(keys.length-3):'')+'</span></div></button>';
+  }
+  return h+aiHint();
+}
+function aiHint(){const k=lsGet(AIKEY);return '<button class="btn block" data-act="aiSettings" style="margin-top:14px">🤖 AI-scan: '+(k?'Claude AI (eigen sleutel)':'gratis tekstherkenning')+'</button>'}
+function sheetMeas(){
+  const d=S.draft,isNew=!S.measure.some(m=>m.id===d.id);
+  let h='<div class="sheet-head"><button class="link" data-act="close">Annuleer</button><h2>'+(isNew?"Nieuwe meting":"Meting")+'</h2><button class="save" data-act="saveMeas">Opslaan</button></div><div class="sheet-body">';
+  if(d.photo)h+='<div class="mscan"><img src="'+d.photo+'" alt=""><div class="mstat '+(d.scanning?"busy":d.scanErr?"err":"ok")+'">'+(d.scanning?'<i class="spin"></i>'+esc(d.scanMsg||"AI leest je foto…"):esc(d.scanMsg||""))+'</div></div>';
+  h+='<div class="field"><label>Datum</label><input type="date" data-f="date" value="'+esc(d.date)+'"></div>';
+  h+='<div class="mgrid">'+MFIELDS.map(([k,l,u])=>'<div class="field'+(d.auto&&d.auto[k]?' auto':'')+'"><label>'+l+(u?' <span>('+u+')</span>':'')+'</label><input data-mv="'+k+'" inputmode="decimal" value="'+esc(d.v[k]??"")+'" placeholder="–"></div>').join("")+'</div>';
+  h+='<div class="field"><label>Notitie</label><textarea data-f="note" placeholder="bv. ochtend, nuchter">'+esc(d.note||"")+'</textarea></div>';
+  if(!isNew)h+='<button class="btn danger block" data-act="delMeas">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Meting verwijderen")+'</button>';
+  return h+'</div>';
+}
+function sheetAI(){
+  const k=lsGet(AIKEY);
+  return '<div class="sheet-head"><span style="width:60px"></span><h2>AI-scan</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">'+
+    '<div class="card" style="cursor:default"><b>Gratis tekstherkenning</b><p class="small muted" style="margin:6px 0 0">Standaard. Werkt op je telefoon zelf, zonder account. Goed voor duidelijke screenshots van een weegschaal-app. De eerste keer laadt hij een paar MB.</p></div>'+
+    '<div class="card" style="cursor:default"><b>Claude AI (beste resultaat)</b><p class="small muted" style="margin:6px 0 10px">Leest ook foto’s van uitdraaien, schermen en handgeschreven maten. Je hebt een eigen API-sleutel nodig van console.anthropic.com. Een scan kost minder dan een cent. De sleutel blijft alleen op deze telefoon en gaat niet mee in je backup.</p>'+
+    '<div class="field"><label>API-sleutel</label><input id="aiKey" type="password" autocomplete="off" placeholder="sk-ant-…" value="'+esc(k)+'"></div>'+
+    '<div class="grid2"><button class="btn primary" data-act="aiKeySave">Opslaan</button><button class="btn" data-act="aiKeyDel"'+(k?'':' disabled')+'>Verwijderen</button></div></div></div>';
+}
+function imgToJpeg(file,max,q){return new Promise((res,rej)=>{const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const sc=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);
+    c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL("image/jpeg",q))};
+  im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("foto"))};im.src=url})}
+function cleanVals(o){const v={};for(const [k,,,lo,hi] of MFIELDS){let x=o&&o[k];if(x==null||x==="")continue;x=num(x);if(x>=lo&&x<=hi)v[k]=Math.round(x*10)/10}return v}
+function parseMeasureText(t){
+  t=" "+t.toLowerCase().replace(/\s+/g," ")+" ";
+  const P={visceral:"visceraa?l(?:e)?(?: vet)?|visceral(?: fat)?",metage:"metabole leeftijd|metabolic age|lichaamsleeftijd|body age",bmr:"bmr|basaal metabolisme|basal metabolic(?: rate)?",
+    fat:"vetpercentage|lichaamsvet|body fat|vetmassa %|pbf|fat ?%",muscle:"skeletspiermassa|spiermassa|skeletal muscle(?: mass)?|muscle mass|smm",weight:"lichaamsgewicht|gewicht|weight",
+    bmi:"bmi",water:"lichaamsvocht|lichaamswater|body water|tbw|water",bone:"botmassa|bone mass|bot",protein:"eiwit|protein",
+    waist:"taille|waist|buikomvang",chest:"borst|chest",arm:"bovenarm|biceps|arm",thigh:"bovenbeen|dij|thigh",hip:"heupen|heup|hips?"};
+  const out={};
+  for(const k in P){const re=new RegExp("(?:"+P[k]+")[^0-9\\n]{0,24}?(\\d{1,4}(?:[.,]\\d{1,2})?)","i");const m=t.match(re);if(m)out[k]=m[1].replace(",",".")}
+  if(/\blb|lbs\b/.test(t)&&out.weight)out.weight=String(num(out.weight)*0.4536);
+  return cleanVals(out);
+}
+let tessLoading=null;
+function loadTess(){if(window.Tesseract)return Promise.resolve();if(tessLoading)return tessLoading;
+  tessLoading=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";sc.onload=res;sc.onerror=()=>{tessLoading=null;rej(new Error("laden"))};document.head.appendChild(sc)});return tessLoading}
+async function aiRead(dataUrl){
+  const key=lsGet(AIKEY);
+  if(key){
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:dataUrl.split(",")[1]}},
+        {type:"text",text:"This photo shows body measurement results (smart-scale app screenshot, body composition printout such as InBody, or tape-measure notes). Extract the values. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %), muscle (muscle mass in kg, use skeletal muscle mass if that is the only one), bmi, visceral (visceral fat level), water (body water %), bone (bone mass kg), bmr (kcal), metage (metabolic age, years), protein (%), waist, chest, arm, thigh, hip (all cm), date (YYYY-MM-DD if a measurement date is visible, else null). Convert lb to kg and inches to cm."}]}]})});
+    if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?"API-sleutel klopt niet":(e.error&&e.error.message)||("fout "+r.status))}
+    const j=await r.json(),txt=(j.content||[]).map(c=>c.text||"").join(""),m=txt.match(/\{[\s\S]*\}/);
+    const o=m?JSON.parse(m[0]):{};return {v:cleanVals(o),date:/^\d{4}-\d{2}-\d{2}$/.test(o.date||"")?o.date:null,engine:"Claude AI"};
+  }
+  await loadTess();
+  const w=await Tesseract.createWorker(["nld","eng"]);
+  const {data:{text}}=await w.recognize(dataUrl);await w.terminate();
+  return {v:parseMeasureText(text),date:null,engine:"tekstherkenning"};
+}
+async function scanMeasure(file){
+  let photo,big;
+  try{[photo,big]=await Promise.all([imgToJpeg(file,360,.62),imgToJpeg(file,1400,.82)])}catch(e){toast("Foto kon niet geladen worden");return}
+  openSheet("meas",{id:uid(),date:today(),v:{},note:"",photo,scanning:true,scanMsg:"AI leest je foto…",auto:{}});
+  const id=S.draft.id;
+  try{
+    const res=await aiRead(big);
+    if(!S.draft||S.draft.id!==id)return;
+    const d=S.draft;let n=0;for(const k in res.v){if(d.v[k]==null||d.v[k]===""){d.v[k]=res.v[k];d.auto[k]=1;n++}}
+    if(res.date)d.date=res.date;
+    d.scanning=false;d.scanErr=!n;d.scanMsg=n?"✓ "+n+(n===1?" waarde":" waarden")+" gevonden met "+res.engine+". Controleer ze even.":"Geen waarden herkend. Vul ze zelf in"+(lsGet(AIKEY)?".":", of zet Claude AI aan voor betere herkenning.");
+    renderSheet();
+  }catch(e){if(!S.draft||S.draft.id!==id)return;Object.assign(S.draft,{scanning:false,scanErr:true,scanMsg:"Lezen mislukt: "+(e.message||"geen internet")+". Vul de waarden zelf in."});renderSheet()}
 }
 
 /* ---------- derived ---------- */
@@ -1185,7 +1402,7 @@ function updateDatalists(){
 
 /* ---------- render main ---------- */
 function render(){
-  const tabs=[["train","Training",ICON.train],["prog","Progressie",ICON.prog],["food","Voeding",ICON.food],["content","Content",ICON.content]];
+  const tabs=[["train","Training",ICON.train],["prog","Progressie",ICON.prog],["meas","Metingen",ICON.meas],["food","Voeding",ICON.food],["content","Content",ICON.content]];
   const tb=$("#tabs");
   if(!tb.children.length)tb.innerHTML=tabs.map(([k,l,ic])=>'<button data-tab="'+k+'" aria-label="'+l+'">'+ic+'<span>'+l+'</span></button>').join("");
   tb.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.tab===S.tab));
@@ -1201,6 +1418,7 @@ function render(){
   else if(S.tab==="train")html=viewTrain();
   else if(S.tab==="prog")html=viewProg();
   else if(S.tab==="food")html=viewFood();
+  else if(S.tab==="meas")html=viewMeas();
   else html=viewContent();
   $("#app").innerHTML=banner+html;
   updateDatalists();
@@ -1375,7 +1593,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
-  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():sheetContent();
+  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
 
@@ -1626,7 +1844,9 @@ document.addEventListener("click",async ev=>{
       break}
     case "mealToggle":{S.mealOpen=S.mealOpen||{};S.mealOpen[a.dataset.meal]=!S.mealOpen[a.dataset.meal];render();break}
     case "fday":{const x=toD(S.foodDate||today());x.setDate(x.getDate()+(+a.dataset.n));S.foodDate=iso(x);render();break}
-    case "addWater":{const d0=S.foodDate||today(),ml=+a.dataset.ml,l=waterLog(d0).slice();l.push(ml);setWaterLog(d0,l);render();toast("+"+ml+" ml 💧 ("+fmtL(getWaterMl(d0))+" L)");break}
+    case "addWater":{const d0=S.foodDate||today(),ml=+a.dataset.ml,before=getWaterMl(d0),l=waterLog(d0).slice();l.push(ml);setWaterLog(d0,l);render();
+      const goal=getFoodGoals().waterMl,now=getWaterMl(d0);
+      if(before<goal&&now>=goal)celebrate("Waterdoel!",fmtL(now)+" L gedronken. Lekker gehydrateerd 💧");else toast("+"+ml+" ml 💧 ("+fmtL(now)+" L)");break}
     case "undoWater":{const d0=S.foodDate||today(),l=waterLog(d0).slice();if(!l.length)break;const r=l.pop();setWaterLog(d0,l);render();toast("−"+r+" ml");break}
     case "addFood":openSheet("food",{mode:"search",meal:a.dataset.meal||defaultMeal(),date:S.foodDate||today(),q:""});setTimeout(()=>{const q=$("#foodQ");if(q)q.focus()},350);break;
     case "editFood":{const e=S.food.find(x=>x.id===a.dataset.id);if(!e)break;
@@ -1635,6 +1855,18 @@ document.addEventListener("click",async ev=>{
     case "pickFood":{const it=S.foodLists[a.dataset.src][+a.dataset.i];if(!it)break;
       if(it.per100){d.mode="detail";d.item=it;d.grams=it.por}else{d.mode="manual";Object.assign(d,{name:it.name},it.fixed)}
       renderSheet();break}
+    case "scan":openScanner();break;
+    case "measManual":openSheet("meas",{id:uid(),date:today(),v:{},note:"",auto:{}});break;
+    case "editMeas":{const m=S.measure.find(x=>x.id===a.dataset.id);if(m)openSheet("meas",Object.assign(clone(m),{v:clone(m.v||{}),auto:{}}));break}
+    case "measMetric":S.measMetric=a.dataset.k;render();break;
+    case "saveMeas":{const m={id:d.id,date:d.date||today(),v:cleanVals(d.v),note:(d.note||"").trim(),photo:d.photo||null};
+      if(!Object.keys(m.v).length){toast("Vul minstens één waarde in");break}
+      const old=S.measure.find(x=>x.id===d.id);m.createdAt=old&&old.createdAt||Date.now();
+      a.disabled=true;try{await Store.save("measure",m);closeSheet();toast("Meting opgeslagen 📏")}catch(e){a.disabled=false;toast(failMsg(e))}break}
+    case "delMeas":if(!S.confirmDel){S.confirmDel=true;renderSheet();break}try{await Store.remove("measure",d.id);closeSheet();toast("Verwijderd")}catch(e){toast(failMsg(e))}break;
+    case "aiSettings":openSheet("ai",{});break;
+    case "aiKeySave":{const v=($("#aiKey").value||"").trim();if(v&&!/^sk-ant-/.test(v)){toast("Een Claude-sleutel begint met sk-ant-");break}lsSet(AIKEY,v);renderSheet();render();toast(v?"Claude AI staat aan 🤖":"Sleutel verwijderd");break}
+    case "aiKeyDel":lsSet(AIKEY,"");renderSheet();render();toast("Sleutel verwijderd");break;
     case "foodManual":d.mode="manual";d.name=d.q||"";renderSheet();break;
     case "foodBack":d.mode="search";renderSheet();break;
     case "foodQuick":d.grams=+a.dataset.g;{const gi=$("#foodG");if(gi)gi.value=d.grams;const fc=$("#foodCalc");if(fc)fc.innerHTML=calcBox(calc(d.item.per100,d.grams))}break;
@@ -1656,6 +1888,7 @@ document.addEventListener("click",async ev=>{
 
 document.addEventListener("input",ev=>{
   const tt=ev.target;
+  if(tt.dataset.mv&&S.draft&&S.draft.v){S.draft.v[tt.dataset.mv]=tt.value;if(S.draft.auto)delete S.draft.auto[tt.dataset.mv];return}
   if(tt.id==="foodQ"&&S.draft){S.draft.q=tt.value;const r=$("#foodResults");if(r)r.innerHTML=foodResults(tt.value);return}
   if(tt.id==="foodG"&&S.draft){S.draft.grams=tt.value;const fc=$("#foodCalc");if(fc)fc.innerHTML=calcBox(calc(S.draft.item.per100,num(tt.value)));return}
   if(tt.dataset.tpl){tplUpdate(tt.dataset.tpl,tt.value);return}
@@ -1673,6 +1906,7 @@ document.addEventListener("change",ev=>{
   const t=ev.target;
   if(t.id==="progSel"){S.progEx=t.value;render();return}
   if(t.id==="nameSet"){const v=t.value.trim();lsSet(NKEY,v?v.charAt(0).toUpperCase()+v.slice(1):"");toast(v?"Naam opgeslagen":"Naam verwijderd");return}
+  if(t.id==="measFile"){if(t.files&&t.files[0])scanMeasure(t.files[0]);t.value="";return}
   if(t.id==="importFile"){if(t.files&&t.files[0])importBackup(t.files[0]);t.value="";return}
   if(S.sheet!=="workout")return;
   if(t.dataset.f==="exname")refreshEx(+t.dataset.ex);
@@ -1698,10 +1932,12 @@ function refreshCopy(){
     $("#sheet .grid2").after(b);
   }
 }
-window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["train","prog","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["train","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 
 render();
 Store.init();
+/* eenmalig: waterdoel op 3 liter */
+if(!lsGet("gym_once_water3l")){setWaterGoal(3000);lsSet("gym_once_water3l","1");render()}
 /* eenmalig: gymdag van maandag 16 november 2026 achteraf toevoegen */
 (function(){
   const K="gym_once_20261116",D="2026-11-16";

@@ -1,5 +1,5 @@
 // Offline support. Network first (always fresh when online), cache as fallback.
-const CACHE = "gym-v5";
+const CACHE = "gym-v6";
 const SHELL = ["./", "index.html", "manifest.json", "icon-180.png", "icon-192.png", "icon-512.png", "kaushan-script.woff2", "exercises.json"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
