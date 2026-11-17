@@ -973,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.4";
+const APP_VERSION="1.9.5";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1505,7 +1505,7 @@ function recentPRs(){
   }
   return out.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
 }
-const kShort=v=>v>=1000?(Math.round(v/100)/10).toLocaleString("nl-NL")+"k":fmtKg(v);
+const kShort=v=>Math.round(v).toLocaleString("nl-NL");
 function viewTrain(){
   const ws=sortedWorkouts(),t=today();
   const monS=weekStart(new Date()),monthS=t.slice(0,7);
@@ -1523,11 +1523,11 @@ function viewTrain(){
     const cls=trained.has(s)?"done":s===t?"today":s>t?"future":"";
     strip+='<div class="wd '+cls+'"><span>'+days[i]+'</span><i>'+(trained.has(s)?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>':d.getDate())+'</i></div>'}
   const si=dayInfo(),tw=ws.filter(w=>w.date===t);
-  h+=tw.length?'<button class="today done" data-act="editWorkout" data-id="'+esc(tw[0].id)+'"><span class="ti">✓</span><span><b>Vandaag getraind: '+esc(tw.map(w=>w.name||"Training").join(" + "))+'</b><span>'+tw.reduce((a,w)=>a+setCount(w),0)+' sets · '+kShort(tw.reduce((a,w)=>a+volume(w),0))+' kg volume</span></span></button>'
+  h+=tw.length?'<button class="today done" data-act="editWorkout" data-id="'+esc(tw[0].id)+'"><span class="ti">✓</span><span><b>Vandaag getraind: '+esc(tw.map(w=>w.name||"Training").join(" + "))+'</b><span>'+tw.reduce((a,w)=>a+setCount(w),0)+' sets · '+kShort(tw.reduce((a,w)=>a+volume(w),0))+' kg verplaatst</span></span></button>'
     :'<div class="today"><span class="ti">💪</span><span><b>Vandaag nog niet getraind</b><span>'+(getWT().length?'Start een schema of begin vrij':'Tijd om te knallen?')+'</span></span><button class="go" data-act="newWorkout">Start</button></div>';
   h+='<div class="hero"><div class="row between" style="align-items:flex-start"><div><div class="hero-label">Deze week</div><div class="hero-big">'+weekW.length+'<small>'+(weekW.length===1?' training':' trainingen')+'</small></div></div>'+
      '<button class="streak'+(si.total?'':' cold')+'" data-act="streak"><span class="row1">'+FLAME+si.total+'</span><small>'+(si.total===1?'dag':'dagen')+' getraind</small></button></div><div class="week">'+strip+'</div></div>';
-  h+='<div class="stats"><div class="stat"><b>'+month+'</b><span>deze maand</span></div><div class="stat"><b>'+kShort(weekVol)+'</b><span>kg volume</span></div><div class="stat"><b>'+lastTxt+'</b><span>laatste training</span></div></div>';
+  h+='<div class="stats"><div class="stat"><b>'+month+'</b><span>deze maand</span></div><div class="stat"><b>'+kShort(weekVol)+'</b><span>kg verplaatst</span></div><div class="stat"><b>'+lastTxt+'</b><span>laatste training</span></div></div>';
   h+='<button class="btn primary block big" data-act="newWorkout">+ Nieuwe training</button>';
   h+=tplCards();
   // PRs
