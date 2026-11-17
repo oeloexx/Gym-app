@@ -313,6 +313,23 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .mcheck{position:absolute;right:-6px;bottom:-4px;width:16px;height:16px;border-radius:50%;background:#22d3ee;color:#00151b;font-style:normal;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #0b0c0f}
 .sheet-head h2{max-width:58%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* metingen */
+.mdate{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:16px;margin-bottom:12px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3)}
+.mdate span{font-weight:700;font-size:14px}.mdate input{width:auto;flex:none;min-height:40px;padding:8px 10px;font-size:15px}
+.mdate.auto input{border-color:#22d3ee}
+.prog{padding:12px}
+.pchips{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:rgba(255,255,255,.04);border-radius:12px;padding:4px}
+.pchip{padding:9px 2px;border-radius:9px;font-size:12px;font-weight:700;color:var(--muted)}
+.pchip.on{background:linear-gradient(100deg,#22d3ee,#e6fbff);color:#00151b;box-shadow:0 4px 14px rgba(34,211,238,.25)}
+.pchip.none{opacity:.45}
+.pstats{display:flex;align-items:flex-end;gap:8px;margin:14px 2px 6px}
+.pstats>div>span{display:block;font-size:11px;color:var(--muted)}
+.pstats b{font-family:Archivo;font-size:20px}
+.parr{color:var(--muted);font-size:18px;padding-bottom:2px}
+.pdiff{margin-left:auto;text-align:right;font-family:Archivo;font-weight:800;font-size:17px;padding:6px 10px;border-radius:12px;line-height:1.15}
+.pdiff small{display:block;font-family:Inter;font-size:11px;font-weight:600;opacity:.8}
+.pdiff.good{background:rgba(34,211,238,.2);color:#7fe7fb}.pdiff.bad{background:rgba(255,138,122,.15);color:#ff9d90}.pdiff.neu{background:rgba(255,255,255,.08);color:#fff}
+.pchart{margin-top:6px}
+
 .mbtns{margin-bottom:12px}.mbtns .btn{cursor:pointer}
 .mintro{text-align:center;padding:22px 18px}.mintro .big{font-size:40px}.mintro b{font-family:Archivo;font-size:18px;display:block;margin:6px 0}.mintro p{color:var(--muted);font-size:14px;line-height:1.5;margin:0}
 .mhero .mthumb{width:40px;height:40px;border-radius:10px;object-fit:cover}
@@ -956,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.0";
+const APP_VERSION="1.9.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1260,7 +1277,7 @@ async function saveFoodEntry(){
 }
 
 /* ---------- metingen ---------- */
-const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vetpercentage","%",3,60],["muscle","Spiermassa","kg",15,120],["bmi","BMI","",12,60],
+const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vetpercentage","%",3,60],["fatmass","Vetmassa","kg",2,80],["smm","SSM (skeletspiermassa)","kg",10,80],["muscle","Spiermassa (totaal)","kg",15,120],["bmi","BMI","",12,60],
   ["visceral","Visceraal vet","niveau",1,30],["water","Lichaamsvocht","%",30,80],["bone","Botmassa","kg",1,8],["bmr","BMR","kcal",800,4000],
   ["metage","Metabole leeftijd","jaar",10,90],["protein","Eiwit","%",5,30],["waist","Taille","cm",40,200],["chest","Borst","cm",50,200],
   ["arm","Arm","cm",15,70],["thigh","Bovenbeen","cm",30,100],["hip","Heup","cm",50,200]];
@@ -1281,11 +1298,7 @@ function viewMeas(){
   h+='<div class="hero mhero"><div class="row between"><span class="hero-label">Laatste meting · '+esc(fmtDate(last.date,{day:"numeric",month:"short"}))+'</span>'+(last.photo?'<img class="mthumb" src="'+last.photo+'" alt="">':'')+'</div>'+
      (w!=null?'<div class="mbig">'+fmtKg(num(w))+'<small> kg</small>'+(dw!=null&&Math.abs(dw)>=0.05?'<em class="'+(dw<0?"dn":"up")+'">'+(dw>0?"+":"−")+fmtKg(Math.abs(dw))+' kg</em>':'')+'</div>':'')+
      '<div class="mchips">'+MFIELDS.filter(f=>f[0]!=="weight"&&last.v&&last.v[f[0]]!=null&&last.v[f[0]]!=="").slice(0,6).map(f=>'<span><b>'+fmtM(f[0],last.v[f[0]])+'</b>'+f[1]+'</span>').join("")+'</div></div>';
-  const avail=MFIELDS.filter(f=>S.measure.filter(m=>m.v&&m.v[f[0]]!=null&&m.v[f[0]]!=="").length>=1);
-  if(!S.measMetric||!avail.some(f=>f[0]===S.measMetric))S.measMetric=(avail[0]||MFIELDS[0])[0];
-  const pts=S.measure.filter(m=>m.v&&m.v[S.measMetric]!=null&&m.v[S.measMetric]!=="").slice().sort((a,b)=>a.date.localeCompare(b.date)).map(m=>({d:m.date,v:num(m.v[S.measMetric])}));
-  h+='<div class="chips" style="margin-top:6px">'+avail.map(f=>'<button class="chip '+(S.measMetric===f[0]?"on":"")+'" data-act="measMetric" data-k="'+f[0]+'">'+f[1]+'</button>').join("")+'</div>';
-  if(pts.length)h+='<div class="chart">'+chartSvg(pts)+'</div>';
+  h+=progressCard();
   h+='<div class="section-label">Geschiedenis</div>';
   for(const m of ms){
     const keys=MFIELDS.filter(f=>m.v&&m.v[f[0]]!=null&&m.v[f[0]]!=="");
@@ -1294,12 +1307,32 @@ function viewMeas(){
   }
   return h+aiHint();
 }
+const PMAIN=[["weight","Gewicht",0],["fat","Vet %",-1],["fatmass","Vetmassa",-1],["smm","SSM",1],["bmi","BMI",0]];
+function seriesFor(k){const pts=[];for(const m of S.measure.slice().sort((a,b)=>a.date.localeCompare(b.date)||(a.createdAt||0)-(b.createdAt||0))){
+  let v=m.v&&m.v[k];if((v==null||v==="")&&k==="fatmass"&&m.v&&m.v.weight&&m.v.fat)v=num(m.v.weight)*num(m.v.fat)/100;
+  if(v!=null&&v!=="")pts.push({d:m.date,v:num(v)})}return pts}
+function progressCard(){
+  if(!S.measMetric||!PMAIN.some(x=>x[0]===S.measMetric)){const f=PMAIN.find(x=>seriesFor(x[0]).length);S.measMetric=f?f[0]:"weight"}
+  const [k,label,good]=PMAIN.find(x=>x[0]===S.measMetric),pts=seriesFor(k),u=MF[k][2];
+  let h='<div class="section-label">Vooruitgang</div><div class="card prog" style="cursor:default"><div class="pchips">'+PMAIN.map(([kk,l])=>{const n=seriesFor(kk).length;
+    return '<button class="pchip '+(kk===k?"on":"")+(n?"":" none")+'" data-act="measMetric" data-k="'+kk+'">'+l+'</button>'}).join("")+'</div>';
+  if(!pts.length)return h+'<div class="empty" style="padding:26px 10px">Nog geen '+esc(label.toLowerCase())+' gemeten.</div></div>';
+  const a=pts[0],b=pts[pts.length-1],diff=b.v-a.v,pct=a.v?diff/a.v*100:0;
+  const cls=Math.abs(diff)<0.05||!good?"neu":(diff*good>0?"good":"bad");
+  const f=v=>k==="bmi"?fmtKg(Math.round(v*10)/10):fmtKg(v);
+  h+='<div class="pstats"><div><span>Begin · '+esc(fmtDate(a.d,{day:"numeric",month:"short"}))+'</span><b>'+f(a.v)+(u?' '+u:'')+'</b></div>'+
+     '<div class="parr">→</div><div><span>Nu · '+esc(fmtDate(b.d,{day:"numeric",month:"short"}))+'</span><b>'+f(b.v)+(u?' '+u:'')+'</b></div>'+
+     '<div class="pdiff '+cls+'">'+(diff>0?"+":diff<0?"−":"±")+f(Math.abs(diff))+(u?' '+u:'')+'<small>'+(diff>0?"+":diff<0?"−":"")+fmtKg(Math.abs(Math.round(pct*10)/10))+'%</small></div></div>';
+  h+=pts.length>1?'<div class="pchart">'+chartSvg(pts)+'</div>':'<div class="small muted" style="margin-top:10px">Na je volgende meting zie je hier de lijn van begin tot nu.</div>';
+  h+='<div class="small muted" style="margin-top:6px">'+pts.length+(pts.length===1?' meting':' metingen')+(pts.length>1?' over '+Math.max(1,Math.round((toD(b.d)-toD(a.d))/864e5))+' dagen':'')+(k==="fatmass"?' · vetmassa wordt berekend uit gewicht × vet % als hij niet op je scan staat':'')+'</div>';
+  return h+'</div>';
+}
 function aiHint(){const k=lsGet(AIKEY);return '<button class="btn block" data-act="aiSettings" style="margin-top:14px">🤖 AI-scan: '+(k?'Claude AI (eigen sleutel)':'gratis tekstherkenning')+'</button>'}
 function sheetMeas(){
   const d=S.draft,isNew=!S.measure.some(m=>m.id===d.id);
   let h='<div class="sheet-head"><button class="link" data-act="close">Annuleer</button><h2>'+(isNew?"Nieuwe meting":"Meting")+'</h2><button class="save" data-act="saveMeas">Opslaan</button></div><div class="sheet-body">';
+  h+='<div class="mdate'+(d.autoDate?' auto':'')+'"><span>📅 Datum van de meting'+(d.autoDate?' <em class="gbadge sm">van de foto</em>':'')+'</span><input type="date" data-f="date" value="'+esc(d.date)+'"></div>';
   if(d.photo)h+='<div class="mscan"><img src="'+d.photo+'" alt=""><div class="mstat '+(d.scanning?"busy":d.scanErr?"err":"ok")+'">'+(d.scanning?'<i class="spin"></i>'+esc(d.scanMsg||"AI leest je foto…"):esc(d.scanMsg||""))+'</div></div>';
-  h+='<div class="field"><label>Datum</label><input type="date" data-f="date" value="'+esc(d.date)+'"></div>';
   h+='<div class="mgrid">'+MFIELDS.map(([k,l,u])=>'<div class="field'+(d.auto&&d.auto[k]?' auto':'')+'"><label>'+l+(u?' <span>('+u+')</span>':'')+'</label><input data-mv="'+k+'" inputmode="decimal" value="'+esc(d.v[k]??"")+'" placeholder="–"></div>').join("")+'</div>';
   h+='<div class="field"><label>Notitie</label><textarea data-f="note" placeholder="bv. ochtend, nuchter">'+esc(d.note||"")+'</textarea></div>';
   if(!isNew)h+='<button class="btn danger block" data-act="delMeas">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Meting verwijderen")+'</button>';
@@ -1320,15 +1353,20 @@ function imgToJpeg(file,max,q){return new Promise((res,rej)=>{const url=URL.crea
 function cleanVals(o){const v={};for(const [k,,,lo,hi] of MFIELDS){let x=o&&o[k];if(x==null||x==="")continue;x=num(x);if(x>=lo&&x<=hi)v[k]=Math.round(x*10)/10}return v}
 function parseMeasureText(t){
   t=" "+t.toLowerCase().replace(/\s+/g," ")+" ";
-  const P={visceral:"visceraa?l(?:e)?(?: vet)?|visceral(?: fat)?",metage:"metabole leeftijd|metabolic age|lichaamsleeftijd|body age",bmr:"bmr|basaal metabolisme|basal metabolic(?: rate)?",
-    fat:"vetpercentage|lichaamsvet|body fat|vetmassa %|pbf|fat ?%",muscle:"skeletspiermassa|spiermassa|skeletal muscle(?: mass)?|muscle mass|smm",weight:"lichaamsgewicht|gewicht|weight",
-    bmi:"bmi",water:"lichaamsvocht|lichaamswater|body water|tbw|water",bone:"botmassa|bone mass|bot",protein:"eiwit|protein",
-    waist:"taille|waist|buikomvang",chest:"borst|chest",arm:"bovenarm|biceps|arm",thigh:"bovenbeen|dij|thigh",hip:"heupen|heup|hips?"};
+  const P=[["visceral","visceraa?l(?:e)?(?: vet)?|visceral(?: fat)?(?: level)?"],["metage","metabole leeftijd|metabolic age|lichaamsleeftijd|body age"],["bmr","bmr|basaal metabolisme|basal metabolic(?: rate)?"],
+    ["fatmass","lichaamsvetmassa|vetmassa|body fat mass|fat mass"],["fat","lichaamsvetpercentage|vetpercentage|percent body fat|lichaamsvet|body fat|pbf|fat ?%"],
+    ["smm","skeletspiermassa|skeletspier|skeletal muscle(?: mass)?|ssm|smm"],["muscle","spiermassa|muscle mass|soft lean mass"],["weight","lichaamsgewicht|gewicht|weight"],
+    ["bmi","bmi"],["water","lichaamsvocht|lichaamswater|total body water|body water|tbw|water"],["bone","botmassa|bone mass|bot"],["protein","eiwit|protein"],
+    ["waist","taille|waist|buikomvang"],["chest","borst|chest"],["arm","bovenarm|biceps|arm"],["thigh","bovenbeen|dij|thigh"],["hip","heupen|heup|hips?"]];
   const out={};
-  for(const k in P){const re=new RegExp("(?:"+P[k]+")[^0-9\\n]{0,24}?(\\d{1,4}(?:[.,]\\d{1,2})?)","i");const m=t.match(re);if(m)out[k]=m[1].replace(",",".")}
-  if(/\blb|lbs\b/.test(t)&&out.weight)out.weight=String(num(out.weight)*0.4536);
-  return cleanVals(out);
+  for(const [k,pat] of P){const re=new RegExp("(?:"+pat+")[^0-9\\n]{0,24}?(\\d{1,4}(?:[.,]\\d{1,2})?)","i");const m=t.match(re);
+    if(m){out[k]=m[1].replace(",",".");t=t.slice(0,m.index)+" ".repeat(m[0].length)+t.slice(m.index+m[0].length)}}
+  if(/\blbs?\b/.test(t)){for(const k of ["weight","fatmass","smm","muscle"])if(out[k])out[k]=String(num(out[k])*0.4536)}
+  const dm=t.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](20\d{2})/);
+  const r=cleanVals(out);if(dm){const iso2=dm[3]+"-"+pad(+dm[2])+"-"+pad(+dm[1]);if(!isNaN(toD(iso2)))r._date=iso2}
+  return r;
 }
+function deriveVals(v,auto){if(v.weight&&v.fat&&(v.fatmass==null||v.fatmass==="")){v.fatmass=Math.round(num(v.weight)*num(v.fat)/10)/10;if(auto)auto.fatmass=1}}
 let tessLoading=null;
 function loadTess(){if(window.Tesseract)return Promise.resolve();if(tessLoading)return tessLoading;
   tessLoading=new Promise((res,rej)=>{const sc=document.createElement("script");sc.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";sc.onload=res;sc.onerror=()=>{tessLoading=null;rej(new Error("laden"))};document.head.appendChild(sc)});return tessLoading}
@@ -1337,7 +1375,7 @@ async function aiRead(dataUrl){
   if(key){
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:dataUrl.split(",")[1]}},
-        {type:"text",text:"This photo shows body measurement results (smart-scale app screenshot, body composition printout such as InBody, or tape-measure notes). Extract the values. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %), muscle (muscle mass in kg, use skeletal muscle mass if that is the only one), bmi, visceral (visceral fat level), water (body water %), bone (bone mass kg), bmr (kcal), metage (metabolic age, years), protein (%), waist, chest, arm, thigh, hip (all cm), date (YYYY-MM-DD if a measurement date is visible, else null). Convert lb to kg and inches to cm."}]}]})});
+        {type:"text",text:"This photo shows body measurement results (smart-scale app screenshot, body composition printout such as InBody, or tape-measure notes). Extract the values. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %), fatmass (body fat mass in kg), smm (skeletal muscle mass in kg, SMM/SSM), muscle (total muscle mass or soft lean mass in kg, only if shown separately from skeletal muscle mass), bmi, visceral (visceral fat level), water (body water %), bone (bone mass kg), bmr (kcal), metage (metabolic age, years), protein (%), waist, chest, arm, thigh, hip (all cm), date (YYYY-MM-DD if a measurement date is visible, else null). Convert lb to kg and inches to cm."}]}]})});
     if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?"API-sleutel klopt niet":(e.error&&e.error.message)||("fout "+r.status))}
     const j=await r.json(),txt=(j.content||[]).map(c=>c.text||"").join(""),m=txt.match(/\{[\s\S]*\}/);
     const o=m?JSON.parse(m[0]):{};return {v:cleanVals(o),date:/^\d{4}-\d{2}-\d{2}$/.test(o.date||"")?o.date:null,engine:"Claude AI"};
@@ -1345,7 +1383,7 @@ async function aiRead(dataUrl){
   await loadTess();
   const w=await Tesseract.createWorker(["nld","eng"]);
   const {data:{text}}=await w.recognize(dataUrl);await w.terminate();
-  return {v:parseMeasureText(text),date:null,engine:"tekstherkenning"};
+  const pv=parseMeasureText(text),pd=pv._date||null;delete pv._date;return {v:pv,date:pd,engine:"tekstherkenning"};
 }
 async function scanMeasure(file){
   let photo,big;
@@ -1356,7 +1394,8 @@ async function scanMeasure(file){
     const res=await aiRead(big);
     if(!S.draft||S.draft.id!==id)return;
     const d=S.draft;let n=0;for(const k in res.v){if(d.v[k]==null||d.v[k]===""){d.v[k]=res.v[k];d.auto[k]=1;n++}}
-    if(res.date)d.date=res.date;
+    if(res.date){d.date=res.date;d.autoDate=1}
+    deriveVals(d.v,d.auto);n=Object.keys(d.auto).length;
     d.scanning=false;d.scanErr=!n;d.scanMsg=n?"✓ "+n+(n===1?" waarde":" waarden")+" gevonden met "+res.engine+". Controleer ze even.":"Geen waarden herkend. Vul ze zelf in"+(lsGet(AIKEY)?".":", of zet Claude AI aan voor betere herkenning.");
     renderSheet();
   }catch(e){if(!S.draft||S.draft.id!==id)return;Object.assign(S.draft,{scanning:false,scanErr:true,scanMsg:"Lezen mislukt: "+(e.message||"geen internet")+". Vul de waarden zelf in."});renderSheet()}
@@ -1859,7 +1898,7 @@ document.addEventListener("click",async ev=>{
     case "measManual":openSheet("meas",{id:uid(),date:today(),v:{},note:"",auto:{}});break;
     case "editMeas":{const m=S.measure.find(x=>x.id===a.dataset.id);if(m)openSheet("meas",Object.assign(clone(m),{v:clone(m.v||{}),auto:{}}));break}
     case "measMetric":S.measMetric=a.dataset.k;render();break;
-    case "saveMeas":{const m={id:d.id,date:d.date||today(),v:cleanVals(d.v),note:(d.note||"").trim(),photo:d.photo||null};
+    case "saveMeas":{deriveVals(d.v);const m={id:d.id,date:d.date||today(),v:cleanVals(d.v),note:(d.note||"").trim(),photo:d.photo||null};
       if(!Object.keys(m.v).length){toast("Vul minstens één waarde in");break}
       const old=S.measure.find(x=>x.id===d.id);m.createdAt=old&&old.createdAt||Date.now();
       a.disabled=true;try{await Store.save("measure",m);closeSheet();toast("Meting opgeslagen 📏")}catch(e){a.disabled=false;toast(failMsg(e))}break}
