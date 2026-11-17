@@ -203,6 +203,23 @@ nav.tabs svg{width:24px;height:24px}
 .exi-ph{width:100%;aspect-ratio:3/2;border-radius:14px}
 .exi-card h3{font-family:Archivo;font-size:22px;margin:12px 2px 2px}
 .exi-card p{color:var(--muted);margin:0 2px 14px;text-transform:capitalize;font-size:14px}
+/* macro-template */
+.tpl-chips{margin-bottom:12px}
+.tpl-hero{border-radius:22px;padding:16px;margin-bottom:12px;background:linear-gradient(160deg,rgba(255,150,70,.16),rgba(23,25,30,.9) 60%);border:1px solid rgba(255,170,100,.16);text-align:center}
+.tpl-name{background:transparent;border:0;border-bottom:1px dashed rgba(255,200,150,.3);border-radius:0;text-align:center;font-weight:700;font-size:17px;color:#ffe6d2;padding:4px;margin-bottom:6px}
+.tpl-k b{display:block;font-family:"Kaushan Script",cursive;font-weight:400;font-size:64px;line-height:1.1;padding:0 8px 6px;background:linear-gradient(100deg,#ffd9a8,#ffa45c 50%,#e3ff6a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tpl-k span{font-size:13px;color:#ffcfa3;font-weight:600}
+.tpl-bar{display:flex;height:10px;border-radius:10px;overflow:hidden;margin:14px 0 8px;background:rgba(255,255,255,.06)}
+.tpl-bar i{display:block;height:100%;transition:width .25s}
+.tpl-leg{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.tpl-leg em{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border-radius:16px;padding:10px 10px 10px 14px;margin-bottom:8px}
+.mrow-l b{display:block;font-weight:700}
+.mrow-l span{font-size:12px;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:4px;flex:none}
+.stepper button{width:38px;height:42px;border-radius:12px;background:var(--card2);font-size:22px;font-weight:700;color:#ffb26b}
+.kcal-in{font-weight:800;color:#ffb26b}
+.stepper input{width:64px;text-align:center;font-weight:700;padding:9px 4px}
 /* voeding */
 .daynav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:4px;margin-bottom:10px}
 .daynav button{width:44px;height:38px;border-radius:10px;font-size:24px;line-height:1;color:#ffcfa3}
@@ -487,7 +504,7 @@ function needsBackup(){
   return Date.now()-getLastBackup()>7*864e5;
 }
 async function exportBackup(){
-  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,foodGoals:getFoodGoals(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})()};
+  const data={app:"gym",version:1,exportedAt:new Date().toISOString(),workouts:S.workouts,content:S.content,food:S.food,foodGoals:getFoodGoals(),macroTemplates:getTpls(),water:(()=>{try{return JSON.parse(lsGet(WAKEY)||"{}")}catch(e){return {}}})()};
   const name="gym-backup-"+today()+".json";
   const blob=new Blob([JSON.stringify(data,null,1)],{type:"application/json"});
   let done=false;
@@ -507,6 +524,7 @@ function importBackup(file){
       if(!d||!Array.isArray(d.workouts)||!Array.isArray(d.content))throw 0;
       let added=0;
       if(d.foodGoals&&!lsGet(FGKEY))lsSet(FGKEY,JSON.stringify(d.foodGoals));
+      if(d.macroTemplates&&!lsGet(TKEY))lsSet(TKEY,JSON.stringify(d.macroTemplates));
       if(d.water&&typeof d.water==="object"){let m={};try{m=JSON.parse(lsGet(WAKEY)||"{}")}catch(e){}lsSet(WAKEY,JSON.stringify(Object.assign({},d.water,m)))}
       for(const kind of ["workouts","content","food"])for(const item of (d[kind]||[])){
         if(!item||typeof item!=="object"||!item.id)continue;
@@ -782,7 +800,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.5.0";
+const APP_VERSION="1.5.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -822,7 +840,6 @@ const FOOD_DB=[
 ].map(([n,kcal,p,c,f,por,u])=>({name:n,per100:{kcal,p,c,f},por,u:u||""}));
 const MEALS=["Ontbijt","Lunch","Diner","Snack"];
 const FGKEY="gym_food_goals",WAKEY="gym_water";
-const getFoodGoals=()=>{try{return Object.assign({kcal:2500,p:150,c:300,f:80,water:8},JSON.parse(lsGet(FGKEY)||"{}"))}catch(e){return {kcal:2500,p:150,c:300,f:80,water:8}}};
 const getWater=d=>{try{return (JSON.parse(lsGet(WAKEY)||"{}")[d])||0}catch(e){return 0}};
 function setWater(d,n){let m={};try{m=JSON.parse(lsGet(WAKEY)||"{}")}catch(e){}m[d]=n;lsSet(WAKEY,JSON.stringify(m))}
 const r1=v=>Math.round(v*10)/10;
@@ -867,7 +884,7 @@ function viewFood(){
   const max=Math.max(g.kcal*1.15,...tots.map(x=>x.kcal));
   h+='<div class="section-label">Laatste 7 dagen</div><div class="card wkchart" style="cursor:default"><div class="bars">'+days.map((x,i)=>'<div class="bcol"><div class="btrack"><i class="goal" style="bottom:'+(g.kcal/max*100).toFixed(1)+'%"></i><em style="height:'+(tots[i].kcal/max*100).toFixed(1)+'%" class="'+(tots[i].kcal>g.kcal*1.05?"over":"")+'"></em></div><span>'+esc(toD(x).toLocaleDateString("nl-NL",{weekday:"narrow"}))+'</span></div>').join("")+'</div>'+
     '<div class="row between small" style="margin-top:10px"><span class="muted">Gemiddeld (gelogde dagen)</span><span><b>'+(logged.length?Math.round(logged.reduce((a,x)=>a+x.kcal,0)/logged.length):0)+'</b> kcal · <b>'+(logged.length?Math.round(logged.reduce((a,x)=>a+x.p,0)/logged.length):0)+'</b> g eiwit</span></div></div>';
-  h+='<button class="btn block" data-act="foodGoals" style="margin-top:12px">🎯 Doelen aanpassen</button>';
+  h+='<button class="btn block" data-act="foodGoals" style="margin-top:12px">🎯 Macro-template: '+esc(g.name)+' · '+g.kcal+' kcal</button>';
   return h;
 }
 function foodRows(list,src){
@@ -905,19 +922,62 @@ function sheetFood(){
   // manual
   let h=head(d.editId?"Bewerken":"Eigen product",'<button class="save" data-act="saveFood">'+(d.editId?"Opslaan":"Toevoegen")+'</button>')+mealSeg;
   h+='<div class="field"><label>Naam</label><input data-f="name" value="'+esc(d.name||"")+'" placeholder="bv. Shoarma bowl"></div>';
-  h+='<div class="grid2"><div class="field"><label>Calorieën (kcal)</label><input data-f="kcal" inputmode="numeric" value="'+esc(d.kcal??"")+'"></div><div class="field"><label>Eiwit (g)</label><input data-f="p" inputmode="decimal" value="'+esc(d.p??"")+'"></div>'+
-     '<div class="field"><label>Koolhydraten (g)</label><input data-f="c" inputmode="decimal" value="'+esc(d.c??"")+'"></div><div class="field"><label>Vet (g)</label><input data-f="f" inputmode="decimal" value="'+esc(d.f??"")+'"></div></div>';
-  h+='<div class="small muted">Vul de waarden in voor de hele portie die je hebt gegeten. Je vindt dit product daarna terug onder "Recent".</div>';
+  h+='<div class="grid2"><div class="field"><label>Eiwit (g)</label><input data-f="p" inputmode="decimal" value="'+esc(d.p??"")+'"></div><div class="field"><label>Koolhydraten (g)</label><input data-f="c" inputmode="decimal" value="'+esc(d.c??"")+'"></div>'+
+     '<div class="field"><label>Vet (g)</label><input data-f="f" inputmode="decimal" value="'+esc(d.f??"")+'"></div><div class="field"><label>Calorieën (kcal)'+(d.kcalManual?'':' · auto')+'</label><input data-f="kcal" inputmode="numeric" value="'+esc(d.kcal??"")+'" class="kcal-in"></div></div>';
+  h+='<div class="small muted">Vul eiwit, koolhydraten en vet in, dan rekent de app de calorieën uit. Staat er een ander getal op de verpakking? Vul de kcal dan zelf in. Gebruik de waarden voor de hele portie die je hebt gegeten. Je vindt dit product daarna terug onder "Recent".</div>';
   if(d.editId)h+='<button class="btn danger block" data-act="delFood" style="margin-top:16px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Verwijderen")+'</button>';
   return h+'</div>';
 }
 function calcBox(v){return '<div class="calcbox"><div><b>'+v.kcal+'</b><span>kcal</span></div><div><b>'+v.p+'</b><span>eiwit</span></div><div><b>'+v.c+'</b><span>koolh.</span></div><div><b>'+v.f+'</b><span>vet</span></div></div>'}
+/* macro-templates: kcal = 4×eiwit + 4×koolhydraten + 9×vet */
+const TKEY="gym_macro_tpl";
+const kcalOf=(p,c,f)=>Math.round(4*num(p)+4*num(c)+9*num(f));
+function getTpls(){
+  let t=null;try{t=JSON.parse(lsGet(TKEY)||"null")}catch(e){}
+  if(!t||!Array.isArray(t.list)||!t.list.length){
+    let old={};try{old=JSON.parse(lsGet(FGKEY)||"{}")}catch(e){}
+    t={active:"std",list:[{id:"std",name:"Standaard",p:old.p||150,c:old.c||300,f:old.f||80}]};
+  }
+  if(!t.list.some(x=>x.id===t.active))t.active=t.list[0].id;
+  return t;
+}
+const saveTpls=t=>lsSet(TKEY,JSON.stringify(t));
+const activeTpl=()=>{const t=getTpls();return t.list.find(x=>x.id===t.active)};
+const getFoodGoals=()=>{let w=8;try{w=JSON.parse(lsGet(FGKEY)||"{}").water||8}catch(e){}
+  const a=activeTpl();return {kcal:kcalOf(a.p,a.c,a.f),p:num(a.p),c:num(a.c),f:num(a.f),water:w,name:a.name}};
+function setWaterGoal(n){let o={};try{o=JSON.parse(lsGet(FGKEY)||"{}")}catch(e){}o.water=n;lsSet(FGKEY,JSON.stringify(o))}
+const MAC=[["p","Eiwit",4,"#ffa45c"],["c","Koolhydraten",4,"#5cb3ff"],["f","Vet",9,"#c8f04a"]];
+function tplLive(a){
+  const k=kcalOf(a.p,a.c,a.f);
+  const parts=MAC.map(([key,,m])=>num(a[key])*m),tot=parts.reduce((x,y)=>x+y,0)||1;
+  return {k,pct:parts.map(x=>Math.round(x/tot*100)),parts};
+}
 function sheetFoodGoals(){
-  const g=getFoodGoals();
-  const f=(k,l,u)=>'<div class="field"><label>'+l+'</label><input data-goal="'+k+'" inputmode="numeric" value="'+g[k]+'" placeholder="'+u+'"></div>';
-  return '<div class="sheet-head"><span style="width:60px"></span><h2>Voedingsdoelen</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">'+
-    f("kcal","Calorieën per dag (kcal)","kcal")+'<div class="grid2">'+f("p","Eiwit (g)","g")+f("c","Koolhydraten (g)","g")+f("f","Vet (g)","g")+f("water","Water (glazen van 250 ml)","glazen")+'</div>'+
-    '<div class="small muted">Wijzigingen worden direct opgeslagen.</div></div>';
+  const t=getTpls(),a=t.list.find(x=>x.id===t.active),L=tplLive(a),g=getFoodGoals();
+  let h='<div class="sheet-head"><span style="width:60px"></span><h2>Macro-template</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">';
+  h+='<div class="chips tpl-chips">'+t.list.map(x=>'<button class="chip '+(x.id===t.active?"on":"")+'" data-act="tplSel" data-id="'+esc(x.id)+'">'+esc(x.name||"Template")+'<span class="n">'+kcalOf(x.p,x.c,x.f)+'</span></button>').join("")+'<button class="chip" data-act="tplNew">+ Nieuw</button></div>';
+  h+='<div class="tpl-hero"><input class="tpl-name" data-tpl="name" value="'+esc(a.name)+'" maxlength="24" placeholder="Naam, bv. Bulk">'+
+     '<div class="tpl-k"><b id="tplK">'+L.k+'</b><span>kcal per dag</span></div>'+
+     '<div class="tpl-bar" id="tplBar">'+MAC.map(([key,,,col],i)=>'<i style="width:'+L.pct[i]+'%;background:'+col+'"></i>').join("")+'</div>'+
+     '<div class="tpl-leg" id="tplLeg">'+MAC.map(([key,l,,col],i)=>'<span><em style="background:'+col+'"></em>'+l+' '+L.pct[i]+'%</span>').join("")+'</div></div>';
+  h+=MAC.map(([key,l,m,col],i)=>'<div class="mrow"><div class="mrow-l"><b>'+l+'</b><span id="mk_'+key+'">'+fmtKg(num(a[key]))+' g × '+m+' = '+Math.round(L.parts[i])+' kcal</span></div>'+
+     '<div class="stepper"><button data-act="mstep" data-k="'+key+'" data-d="-5" aria-label="minder">−</button><input data-tpl="'+key+'" inputmode="numeric" value="'+esc(a[key])+'"><button data-act="mstep" data-k="'+key+'" data-d="5" aria-label="meer">+</button></div></div>').join("");
+  h+='<div class="small muted" style="margin:4px 2px 14px">Calorieën worden automatisch berekend: eiwit en koolhydraten 4 kcal per gram, vet 9 kcal per gram.</div>';
+  h+='<div class="mrow"><div class="mrow-l"><b>💧 Water</b><span>glazen van 250 ml</span></div><div class="stepper"><button data-act="wstep" data-d="-1">−</button><input data-goal="water" inputmode="numeric" value="'+g.water+'"><button data-act="wstep" data-d="1">+</button></div></div>';
+  if(t.list.length>1)h+='<button class="btn danger block" data-act="tplDel" style="margin-top:14px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Template “"+esc(a.name)+"” verwijderen")+'</button>';
+  return h+'</div>';
+}
+function tplUpdate(key,val){
+  const t=getTpls(),a=t.list.find(x=>x.id===t.active);
+  a[key]=key==="name"?val:Math.max(0,Math.min(2000,Math.round(num(val))));saveTpls(t);
+  if(key==="name"){const c=$("#sheet .tpl-chips .chip.on");if(c&&c.firstChild)c.firstChild.textContent=val||"Template";const db=$('#sheet [data-act="tplDel"]');if(db&&!S.confirmDel)db.textContent="Template “"+(val||"Template")+"” verwijderen";render();return}
+  const L=tplLive(a);
+  $("#tplK").textContent=L.k;
+  $("#tplBar").innerHTML=MAC.map(([,, ,col],i)=>'<i style="width:'+L.pct[i]+'%;background:'+col+'"></i>').join("");
+  $("#tplLeg").innerHTML=MAC.map(([,l,,col],i)=>'<span><em style="background:'+col+'"></em>'+l+' '+L.pct[i]+'%</span>').join("");
+  MAC.forEach(([k2,,m],i)=>{const el=$("#mk_"+k2);if(el)el.textContent=fmtKg(num(a[k2]))+" g × "+m+" = "+Math.round(L.parts[i])+" kcal"});
+  const c=$("#sheet .tpl-chips .chip.on .n");if(c)c.textContent=L.k;
+  render();
 }
 async function saveFoodEntry(){
   const d=S.draft;let e;
@@ -1348,7 +1408,7 @@ document.addEventListener("click",async ev=>{
     case "addFood":openSheet("food",{mode:"search",meal:a.dataset.meal||defaultMeal(),date:S.foodDate||today(),q:""});setTimeout(()=>{const q=$("#foodQ");if(q)q.focus()},350);break;
     case "editFood":{const e=S.food.find(x=>x.id===a.dataset.id);if(!e)break;
       if(e.per100)openSheet("food",{mode:"detail",editId:e.id,meal:e.meal,date:e.date,item:{name:e.name,per100:e.per100,por:num(e.grams)||100,u:""},grams:e.grams});
-      else openSheet("food",{mode:"manual",editId:e.id,meal:e.meal,date:e.date,name:e.name,kcal:e.kcal,p:e.p,c:e.c,f:e.f});break}
+      else openSheet("food",{mode:"manual",editId:e.id,meal:e.meal,date:e.date,name:e.name,kcal:e.kcal,p:e.p,c:e.c,f:e.f,kcalManual:e.kcal!==kcalOf(e.p,e.c,e.f)});break}
     case "pickFood":{const it=S.foodLists[a.dataset.src][+a.dataset.i];if(!it)break;
       if(it.per100){d.mode="detail";d.item=it;d.grams=it.por}else{d.mode="manual";Object.assign(d,{name:it.name},it.fixed)}
       renderSheet();break}
@@ -1359,6 +1419,11 @@ document.addEventListener("click",async ev=>{
     case "delFood":if(!S.confirmDel){S.confirmDel=true;renderSheet();break}
       try{await Store.remove("food",d.editId);closeSheet();toast("Verwijderd")}catch(e){toast(failMsg(e))}break;
     case "foodGoals":openSheet("foodGoals",{});break;
+    case "tplSel":{const t=getTpls();t.active=a.dataset.id;saveTpls(t);S.confirmDel=false;renderSheet();render();break}
+    case "tplNew":{const t=getTpls(),cur=t.list.find(x=>x.id===t.active),id=uid();t.list.push({id,name:"Template "+(t.list.length+1),p:cur.p,c:cur.c,f:cur.f});t.active=id;saveTpls(t);renderSheet();render();setTimeout(()=>{const n=$("#sheet .tpl-name");if(n){n.focus();n.select()}},50);break}
+    case "tplDel":{if(!S.confirmDel){S.confirmDel=true;renderSheet();break}const t=getTpls();t.list=t.list.filter(x=>x.id!==t.active);t.active=t.list[0].id;saveTpls(t);S.confirmDel=false;renderSheet();render();toast("Template verwijderd");break}
+    case "mstep":{const a2=activeTpl(),v=Math.max(0,num(a2[a.dataset.k])+(+a.dataset.d));const inp=$('#sheet [data-tpl="'+a.dataset.k+'"]');if(inp)inp.value=v;tplUpdate(a.dataset.k,v);break}
+    case "wstep":{const g=getFoodGoals(),v=Math.max(1,Math.min(20,g.water+(+a.dataset.d)));setWaterGoal(v);const inp=$('#sheet [data-goal="water"]');if(inp)inp.value=v;render();break}
     case "delWorkout":case "delContent":{
       if(!S.confirmDel){S.confirmDel=true;renderSheet();break}
       try{await Store.remove(act==="delWorkout"?"workouts":"content",d.id);closeSheet();toast("Verwijderd")}catch(e){toast(failMsg(e))}
@@ -1370,12 +1435,17 @@ document.addEventListener("input",ev=>{
   const tt=ev.target;
   if(tt.id==="foodQ"&&S.draft){S.draft.q=tt.value;const r=$("#foodResults");if(r)r.innerHTML=foodResults(tt.value);return}
   if(tt.id==="foodG"&&S.draft){S.draft.grams=tt.value;const fc=$("#foodCalc");if(fc)fc.innerHTML=calcBox(calc(S.draft.item.per100,num(tt.value)));return}
-  if(tt.dataset.goal){const g=getFoodGoals(),v=parseInt(tt.value,10);if(v>0){g[tt.dataset.goal]=Math.min(v,tt.dataset.goal==="water"?20:20000);lsSet(FGKEY,JSON.stringify(g));render()}return}
+  if(tt.dataset.goal==="water"){const v=parseInt(tt.value,10);if(v>0){setWaterGoal(Math.min(v,20));render()}return}
+  if(tt.dataset.tpl){tplUpdate(tt.dataset.tpl,tt.value);return}
   const t=ev.target;if(!S.draft||!t.dataset.f)return;
   const f=t.dataset.f;
   if(t.dataset.set!=null){S.draft.exercises[+t.dataset.ex].sets[+t.dataset.set][f]=t.value}
   else if(f==="exname"){S.draft.exercises[+t.dataset.ex].name=t.value}
   else S.draft[f]=t.value;
+  if(S.sheet==="food"&&S.draft.mode==="manual"){
+    if(f==="kcal")S.draft.kcalManual=t.value.trim()!=="";
+    else if("pcf".includes(f)&&f.length===1&&!S.draft.kcalManual){const k=kcalOf(S.draft.p,S.draft.c,S.draft.f);S.draft.kcal=k||"";const ki=$('#sheet [data-f="kcal"]');if(ki)ki.value=k||""}
+  }
 });
 document.addEventListener("change",ev=>{
   const t=ev.target;
