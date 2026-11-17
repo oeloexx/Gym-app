@@ -241,6 +241,18 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .mv span{font-size:11px;color:var(--muted);white-space:nowrap}
 @media (max-width:370px){.mr{width:34px;height:34px}.mr .mi{left:9px;top:9px;width:16px;height:16px}.mv b{font-size:14px}}
 /* voeding */
+.meal{padding:4px 4px 6px}
+.meal-top{display:flex;align-items:center;gap:10px;width:100%;padding:10px 10px 6px;text-align:left}
+.meal-e{font-size:22px;line-height:1}
+.meal-t{flex:1;min-width:0}.meal-t b{display:block;font-family:Archivo;font-size:16px}.meal-t span{font-size:12px;color:var(--muted)}
+.meal-k{font-size:12px;color:var(--muted);white-space:nowrap}.meal-k b{font-family:Archivo;font-size:16px;color:#fff}
+.chev{width:20px;height:20px;color:var(--muted);transition:transform .25s;flex:none}
+.meal.open .chev{transform:rotate(180deg)}
+.meal-mac{display:flex;gap:12px;padding:0 12px 6px 44px;font-size:12px;color:var(--muted);font-weight:500;flex-wrap:wrap}
+.meal-mac i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.meal-mac b{color:#fff}
+.meal.open .meal-mac{border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:4px}
+
 .mtiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .mtile{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:12px 14px;border-radius:18px;background:var(--card);border:1px dashed rgba(255,255,255,.12);text-align:left;min-height:92px}
 .mtile:active{transform:scale(.98)}
@@ -265,9 +277,10 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .mbar span{color:var(--muted)}.mbar span b{color:#fff}
 .mbar i{display:block;height:7px;border-radius:7px;background:rgba(255,255,255,.07);margin-top:4px;overflow:hidden}
 .mbar em{display:block;height:100%;border-radius:7px}
-.water .glasses{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
-.glass{width:36px;height:40px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25)}
-.glass svg{width:28px;height:30px}
+.water{padding:10px 12px}
+.water .glasses{display:flex;justify-content:space-between;gap:2px;margin-top:6px}
+.glass{flex:1;max-width:34px;height:30px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.25)}
+.glass svg{width:20px;height:22px}
 .glass .wf{fill:transparent;transition:fill .2s}
 .glass.on{color:#5cb3ff}.glass.on .wf{fill:rgba(92,179,255,.55)}
 .meal{background:var(--card);border-radius:var(--r);padding:6px 6px 6px;margin-bottom:10px}
@@ -829,7 +842,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.5.5";
+const APP_VERSION="1.5.6";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -929,8 +942,12 @@ function viewFood(){
   for(const m of filled){
     const items=S.food.filter(e=>e.date===d&&e.meal===m).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
     const tt=items.reduce((a,e)=>{a.k+=num(e.kcal);a.p+=num(e.p);a.c+=num(e.c);a.f+=num(e.f);return a},{k:0,p:0,c:0,f:0});
-    h+='<div class="meal"><div class="meal-h"><span>'+MEMO[m][0]+' '+m+'</span><span class="muted small">'+tt.k+' kcal</span></div>'+
-       '<div class="meal-mac"><span style="color:#ff6b3d">E '+Math.round(tt.p)+'g</span><span style="color:#e64980">K '+Math.round(tt.c)+'g</span><span style="color:#339af0">V '+Math.round(tt.f)+'g</span></div>';
+    const open=!!(S.mealOpen&&S.mealOpen[m]);
+    h+='<div class="meal'+(open?' open':'')+'"><button class="meal-top" data-act="mealToggle" data-meal="'+m+'">'+
+       '<span class="meal-e">'+MEMO[m][0]+'</span><span class="meal-t"><b>'+m+'</b><span>'+items.length+(items.length===1?' item':' items')+'</span></span>'+
+       '<span class="meal-k"><b>'+tt.k+'</b> kcal</span><svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>'+
+       '<div class="meal-mac"><span><i style="background:#ff6b3d"></i>Eiwit <b>'+Math.round(tt.p)+'g</b></span><span><i style="background:#e64980"></i>Koolh. <b>'+Math.round(tt.c)+'g</b></span><span><i style="background:#339af0"></i>Vet <b>'+Math.round(tt.f)+'g</b></span></div>';
+    if(!open){h+='</div>';continue}
     h+=items.map(e=>'<button class="fitem" data-act="editFood" data-id="'+esc(e.id)+'"><div><b>'+esc(e.name)+'</b><span>'+(e.grams?fmtKg(num(e.grams))+' g · ':'')+fmtKg(num(e.p))+' g eiwit</span></div><em>'+num(e.kcal)+'</em></button>').join("");
     h+='<button class="fadd" data-act="addFood" data-meal="'+m+'">+ Toevoegen</button></div>';
   }
@@ -1465,6 +1482,7 @@ document.addEventListener("click",async ev=>{
       a.disabled=true;
       try{await Store.save("content",c);closeSheet();toast("Opgeslagen")}catch(e){a.disabled=false;toast(failMsg(e))}
       break}
+    case "mealToggle":{S.mealOpen=S.mealOpen||{};S.mealOpen[a.dataset.meal]=!S.mealOpen[a.dataset.meal];render();break}
     case "fday":{const x=toD(S.foodDate||today());x.setDate(x.getDate()+(+a.dataset.n));S.foodDate=iso(x);render();break}
     case "water":{const d0=S.foodDate||today(),n=+a.dataset.n,cur=getWater(d0);setWater(d0,cur===n?n-1:n);render();break}
     case "addFood":openSheet("food",{mode:"search",meal:a.dataset.meal||defaultMeal(),date:S.foodDate||today(),q:""});setTimeout(()=>{const q=$("#foodQ");if(q)q.focus()},350);break;
@@ -1542,6 +1560,16 @@ window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["tr
 
 render();
 Store.init();
+/* eenmalig: gymdag van maandag 16 november 2026 achteraf toevoegen */
+(function(){
+  const K="gym_once_20261116",D="2026-11-16";
+  if(lsGet(K)||today()>"2026-11-23")return;
+  if(!S.workouts.some(w=>w.date===D)){
+    S.workouts.push({id:"once-"+D,date:D,name:"Gymdag",note:"Achteraf ingevuld",createdAt:Date.now(),exercises:[]});
+    Store.persist();render();
+  }
+  lsSet(K,"1");
+})();
 loadExercises();
 showWelcome();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
