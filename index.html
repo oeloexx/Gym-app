@@ -973,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.1";
+const APP_VERSION="1.9.2";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1277,7 +1277,7 @@ async function saveFoodEntry(){
 }
 
 /* ---------- metingen ---------- */
-const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vetpercentage","%",3,60],["fatmass","Vetmassa","kg",2,80],["smm","SSM (skeletspiermassa)","kg",10,80],["muscle","Spiermassa (totaal)","kg",15,120],["bmi","BMI","",12,60],
+const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vetpercentage","%",3,60],["fatmass","Vetmassa","kg",2,80],["smm","SSM (skeletspiermassa)","kg",10,80],["muscle","Spiermassa (totaal)","kg",15,120],["ffm","Vetvrije massa","kg",20,130],["bmi","BMI","",12,60],["score","InBody-score","punten",30,120],
   ["visceral","Visceraal vet","niveau",1,30],["water","Lichaamsvocht","%",30,80],["bone","Botmassa","kg",1,8],["bmr","BMR","kcal",800,4000],
   ["metage","Metabole leeftijd","jaar",10,90],["protein","Eiwit","%",5,30],["waist","Taille","cm",40,200],["chest","Borst","cm",50,200],
   ["arm","Arm","cm",15,70],["thigh","Bovenbeen","cm",30,100],["hip","Heup","cm",50,200]];
@@ -1352,18 +1352,20 @@ function imgToJpeg(file,max,q){return new Promise((res,rej)=>{const url=URL.crea
   im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("foto"))};im.src=url})}
 function cleanVals(o){const v={};for(const [k,,,lo,hi] of MFIELDS){let x=o&&o[k];if(x==null||x==="")continue;x=num(x);if(x>=lo&&x<=hi)v[k]=Math.round(x*10)/10}return v}
 function parseMeasureText(t){
-  t=" "+t.toLowerCase().replace(/\s+/g," ")+" ";
-  const P=[["visceral","visceraa?l(?:e)?(?: vet)?|visceral(?: fat)?(?: level)?"],["metage","metabole leeftijd|metabolic age|lichaamsleeftijd|body age"],["bmr","bmr|basaal metabolisme|basal metabolic(?: rate)?"],
+  t=" "+t.toLowerCase().replace(/\s+/g," ")+" ";const t0=t;
+  const P=[["score","inbody[- ]?score|inbody punten"],["visceral","visceraa?l(?:e)?(?: vet)?|visceral(?: fat)?(?: level)?"],["metage","metabole leeftijd|metabolic age|lichaamsleeftijd|body age"],["bmr","bmr|basaal metabolisme|basal metabolic(?: rate)?"],
     ["fatmass","lichaamsvetmassa|vetmassa|body fat mass|fat mass"],["fat","lichaamsvetpercentage|vetpercentage|percent body fat|lichaamsvet|body fat|pbf|fat ?%"],
-    ["smm","skeletspiermassa|skeletspier|skeletal muscle(?: mass)?|ssm|smm"],["muscle","spiermassa|muscle mass|soft lean mass"],["weight","lichaamsgewicht|gewicht|weight"],
+    ["ffm","vetvrije massa|fat free mass|ffm|lean body mass"],["smm","skeletspiermassa|skeletspier|skeletal muscle(?: mass)?|ssm|smm"],["muscle","spiermassa|muscle mass|soft lean mass"],["weight","lichaamsgewicht|gewicht|weight"],
     ["bmi","bmi"],["water","lichaamsvocht|lichaamswater|total body water|body water|tbw|water"],["bone","botmassa|bone mass|bot"],["protein","eiwit|protein"],
     ["waist","taille|waist|buikomvang"],["chest","borst|chest"],["arm","bovenarm|biceps|arm"],["thigh","bovenbeen|dij|thigh"],["hip","heupen|heup|hips?"]];
   const out={};
   for(const [k,pat] of P){const re=new RegExp("(?:"+pat+")[^0-9\\n]{0,24}?(\\d{1,4}(?:[.,]\\d{1,2})?)","i");const m=t.match(re);
     if(m){out[k]=m[1].replace(",",".");t=t.slice(0,m.index)+" ".repeat(m[0].length)+t.slice(m.index+m[0].length)}}
   if(/\blbs?\b/.test(t)){for(const k of ["weight","fatmass","smm","muscle"])if(out[k])out[k]=String(num(out[k])*0.4536)}
-  const dm=t.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](20\d{2})/);
-  const r=cleanVals(out);if(dm){const iso2=dm[3]+"-"+pad(+dm[2])+"-"+pad(+dm[1]);if(!isNaN(toD(iso2)))r._date=iso2}
+  const wl=t0.match(/(?:total body water|lichaamsvocht|lichaamswater|tbw)[^0-9]{0,24}?(\d{2}(?:[.,]\d)?)\s*(?:l\b|liter)/);
+  if(wl&&out.weight)out.water=String(num(wl[1].replace(",","."))/num(out.weight)*100);
+  const dm=t0.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](20\d{2})/),dy=t0.match(/(20\d{2})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  const r=cleanVals(out);const iso2=dy?dy[1]+"-"+pad(+dy[2])+"-"+pad(+dy[3]):dm?dm[3]+"-"+pad(+dm[2])+"-"+pad(+dm[1]):null;if(iso2&&!isNaN(toD(iso2)))r._date=iso2;
   return r;
 }
 function deriveVals(v,auto){if(v.weight&&v.fat&&(v.fatmass==null||v.fatmass==="")){v.fatmass=Math.round(num(v.weight)*num(v.fat)/10)/10;if(auto)auto.fatmass=1}}
@@ -1375,7 +1377,7 @@ async function aiRead(dataUrl){
   if(key){
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:dataUrl.split(",")[1]}},
-        {type:"text",text:"This photo shows body measurement results (smart-scale app screenshot, body composition printout such as InBody, or tape-measure notes). Extract the values. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %), fatmass (body fat mass in kg), smm (skeletal muscle mass in kg, SMM/SSM), muscle (total muscle mass or soft lean mass in kg, only if shown separately from skeletal muscle mass), bmi, visceral (visceral fat level), water (body water %), bone (bone mass kg), bmr (kcal), metage (metabolic age, years), protein (%), waist, chest, arm, thigh, hip (all cm), date (YYYY-MM-DD if a measurement date is visible, else null). Convert lb to kg and inches to cm."}]}]})});
+        {type:"text",text:"This photo shows body measurement results, most likely an InBody result sheet (InBody 270/570 printout or InBody app screenshot), otherwise a smart-scale app or tape-measure notes. Extract the measured values, never the normal-range numbers printed next to them. InBody labels: Weight, Skeletal Muscle Mass (SMM), Body Fat Mass, PBF (Percent Body Fat), BMI, Fat Free Mass, Total Body Water (in L), Visceral Fat Level, Basal Metabolic Rate, InBody Score. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %, PBF), fatmass (body fat mass in kg), ffm (fat free mass in kg), score (InBody score, points), smm (skeletal muscle mass in kg, SMM/SSM), muscle (total muscle mass or soft lean mass in kg, only if shown separately from skeletal muscle mass), bmi, visceral (visceral fat level), water (body water as % of weight; if only Total Body Water in liters is shown, compute liters / weight * 100), bone (bone mass kg), bmr (kcal), metage (metabolic age, years), protein (%), waist, chest, arm, thigh, hip (all cm), date (YYYY-MM-DD if a measurement date is visible, else null). Convert lb to kg and inches to cm."}]}]})});
     if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?"API-sleutel klopt niet":(e.error&&e.error.message)||("fout "+r.status))}
     const j=await r.json(),txt=(j.content||[]).map(c=>c.text||"").join(""),m=txt.match(/\{[\s\S]*\}/);
     const o=m?JSON.parse(m[0]):{};return {v:cleanVals(o),date:/^\d{4}-\d{2}-\d{2}$/.test(o.date||"")?o.date:null,engine:"Claude AI"};
