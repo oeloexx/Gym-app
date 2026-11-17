@@ -226,6 +226,20 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .stepper button{width:38px;height:42px;border-radius:12px;background:var(--card2);font-size:22px;font-weight:700;color:#ffb26b}
 .kcal-in{font-weight:800;color:#ffb26b}
 .stepper input{width:64px;text-align:center;font-weight:700;padding:9px 4px}
+/* zwevende macro-balk */
+#macroPill{position:fixed;left:12px;right:12px;top:calc(var(--sat) + 8px);z-index:25;max-width:540px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;
+  padding:10px 12px;border-radius:26px;background:rgba(48,50,56,.82);backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.45);transform:translateY(-130%);opacity:0;transition:transform .35s cubic-bezier(.3,.8,.2,1),opacity .25s;pointer-events:none}
+#macroPill.show{transform:none;opacity:1}
+.mp{display:flex;align-items:center;gap:7px;min-width:0}
+.mr{position:relative;width:40px;height:40px;flex:none}
+.mr svg{width:100%;height:100%}
+.mr .mi{position:absolute;left:11px;top:11px;width:18px;height:18px}
+.mv{min-width:0;line-height:1.1}
+.mv b{display:block;font-family:Archivo,Inter,sans-serif;font-size:16px;font-weight:800;white-space:nowrap}
+.mv b small{font-family:Inter;font-weight:500;font-size:11px;color:var(--muted);margin-left:1px}
+.mv span{font-size:11px;color:var(--muted);white-space:nowrap}
+@media (max-width:370px){.mr{width:34px;height:34px}.mr .mi{left:9px;top:9px;width:16px;height:16px}.mv b{font-size:14px}}
 /* voeding */
 .daynav{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:4px;margin-bottom:10px}
 .daynav button{width:44px;height:38px;border-radius:10px;font-size:24px;line-height:1;color:#ffcfa3}
@@ -806,7 +820,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.5.3";
+const APP_VERSION="1.5.4";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -863,6 +877,32 @@ function recentFoods(){
   return out;
 }
 const RING_C=2*Math.PI*52;
+const MI={
+  k:'<path d="M12 3c1 3.5 5.5 6 5.5 11a5.5 5.5 0 0 1-11 0c0-2.8 1.5-4.6 2.8-5.8.2 1.8 1 2.8 1.9 3.2C10.6 8.7 10.6 5.6 12 3z"/>',
+  p:'<path d="M15.5 4.5a4.5 4.5 0 0 1 0 6.4l-3.2 3.2-3.4-.4-.4-3.4 3.2-3.2a4.5 4.5 0 0 1 3.8-2.6zM8.5 15.5l-3 3M5 21l-1.5-1.5"/><circle cx="4.2" cy="20.3" r="1.6"/>',
+  c:'<path d="M12 21V9M12 13c-2.5 0-4-1.6-4-4 2.5 0 4 1.6 4 4zm0 0c2.5 0 4-1.6 4-4-2.5 0-4 1.6-4 4zm0-4c-2.2 0-3.5-1.4-3.5-3.5C10.7 5.5 12 6.9 12 9zm0 0c2.2 0 3.5-1.4 3.5-3.5C13.3 5.5 12 6.9 12 9zm0 8c-2.5 0-4-1.6-4-4 2.5 0 4 1.6 4 4zm0 0c2.5 0 4-1.6 4-4-2.5 0-4 1.6-4 4z"/>',
+  f:'<path d="M12 3.5c3 4 6 7.2 6 10.5a6 6 0 0 1-12 0c0-3.3 3-6.5 6-10.5z"/>'
+};
+const PILLC={k:"#4cc26a",p:"#ff6b3d",c:"#e64980",f:"#339af0"};
+function miniRing(key,val,goal,unit){
+  const pct=goal?Math.min(1,val/goal):0,C=2*Math.PI*17,col=val>goal*1.05&&key==="k"?"#ff5c5c":PILLC[key];
+  return '<div class="mp"><div class="mr"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" stroke="rgba(255,255,255,.1)" stroke-width="5" fill="none"/><circle cx="22" cy="22" r="17" stroke="'+col+'" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="'+(C*pct).toFixed(1)+' '+C.toFixed(1)+'" transform="rotate(-90 22 22)"/></svg>'+
+    '<svg class="mi" viewBox="0 0 24 24" fill="none" stroke="'+col+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+MI[key]+'</svg></div>'+
+    '<div class="mv"><b>'+(key==="k"?Math.round(val).toLocaleString("nl-NL"):Math.round(val))+(unit?'<small>'+unit+'</small>':'')+'</b><span>'+(key==="k"?'kcal':Math.round(pct*100)+' %')+'</span></div></div>';
+}
+function macroPillHTML(){
+  const d=S.foodDate||today(),g=getFoodGoals(),t=dayTotals(d);
+  return miniRing("k",t.kcal,g.kcal,"")+miniRing("p",t.p,g.p,"g")+miniRing("c",t.c,g.c,"g")+miniRing("f",t.f,g.f,"g");
+}
+function updatePill(){
+  let el=$("#macroPill");
+  if(S.tab!=="food"){if(el)el.classList.remove("show");return}
+  if(!el){el=document.createElement("div");el.id="macroPill";document.body.appendChild(el)}
+  el.innerHTML=macroPillHTML();
+  const hero=$(".fhero");const lim=hero?hero.getBoundingClientRect().bottom+window.scrollY-40:200;
+  el.classList.toggle("show",window.scrollY>lim);
+}
+window.addEventListener("scroll",()=>{if(S.tab==="food"){const el=$("#macroPill"),hero=$(".fhero");if(el&&hero)el.classList.toggle("show",hero.getBoundingClientRect().bottom<40)}},{passive:true});
 function viewFood(){
   const d=S.foodDate||today(),g=getFoodGoals(),t=dayTotals(d);
   let h='<header class="top"><div><div class="hello">Eten & drinken</div><h1>Voeding</h1></div>'+GEAR+'</header>';
@@ -871,9 +911,9 @@ function viewFood(){
   const bar=(lbl,v,goal,col)=>'<div class="mbar"><div class="row between"><span>'+lbl+'</span><span><b>'+Math.round(v)+'</b> / '+goal+' g</span></div><i><em style="width:'+Math.min(100,v/goal*100).toFixed(1)+'%;background:'+col+'"></em></i></div>';
   h+='<div class="hero fhero"><div class="kring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" stroke="rgba(255,255,255,.07)" stroke-width="11" fill="none"/>'+
      '<circle cx="60" cy="60" r="52" stroke="'+(left<0?"#ff5c5c":"url(#kg)")+'" stroke-width="11" fill="none" stroke-linecap="round" stroke-dasharray="'+(RING_C*pct).toFixed(1)+' '+RING_C.toFixed(1)+'" transform="rotate(-90 60 60)"/>'+
-     '<defs><linearGradient id="kg"><stop offset="0" stop-color="#ffb26b"/><stop offset="1" stop-color="#e3ff6a"/></linearGradient></defs></svg>'+
+     '<defs><linearGradient id="kg"><stop offset="0" stop-color="#3fae5a"/><stop offset="1" stop-color="#7ddc7e"/></linearGradient></defs></svg>'+
      '<div><b>'+Math.abs(left)+'</b><span>'+(left<0?'kcal te veel':'kcal over')+'</span></div></div>'+
-     '<div class="macros"><div class="kline"><b>'+t.kcal+'</b> / '+g.kcal+' kcal</div>'+bar("Eiwit",t.p,g.p,"linear-gradient(90deg,#ffb26b,#ff8a3d)")+bar("Koolhydraten",t.c,g.c,"linear-gradient(90deg,#5cb3ff,#8fd0ff)")+bar("Vet",t.f,g.f,"linear-gradient(90deg,#e3ff6a,#b8e636)")+'</div></div>';
+     '<div class="macros"><div class="kline"><b>'+t.kcal+'</b> / '+g.kcal+' kcal</div>'+bar("Eiwit",t.p,g.p,"linear-gradient(90deg,#ff5a2c,#ff8c5a)")+bar("Koolhydraten",t.c,g.c,"linear-gradient(90deg,#d6336c,#f06595)")+bar("Vet",t.f,g.f,"linear-gradient(90deg,#1c7ed6,#4dabf7)")+'</div></div>';
   const w=getWater(d);let glasses="";
   for(let i=0;i<g.water;i++)glasses+='<button class="glass '+(i<w?"on":"")+'" data-act="water" data-n="'+(i+1)+'" aria-label="'+(i+1)+' glazen"><svg viewBox="0 0 24 24"><path d="M6 3h12l-1.6 17a1.5 1.5 0 0 1-1.5 1.4H9.1a1.5 1.5 0 0 1-1.5-1.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path class="wf" d="M7.2 9h9.6l-1.1 11.2a.6.6 0 0 1-.6.5H8.9a.6.6 0 0 1-.6-.5z"/></svg></button>';
   h+='<div class="water card" style="cursor:default"><div class="row between"><span class="hero-label">💧 Water</span><span class="small muted">'+(w*0.25).toLocaleString("nl-NL")+' / '+(g.water*0.25).toLocaleString("nl-NL")+' L</span></div><div class="glasses">'+glasses+'</div></div>';
@@ -952,7 +992,7 @@ const activeTpl=()=>{const t=getTpls();return t.list.find(x=>x.id===t.active)};
 const getFoodGoals=()=>{let w=8;try{w=JSON.parse(lsGet(FGKEY)||"{}").water||8}catch(e){}
   const a=activeTpl();return {kcal:kcalOf(a.p,a.c,a.f),p:num(a.p),c:num(a.c),f:num(a.f),water:w,name:a.name}};
 function setWaterGoal(n){let o={};try{o=JSON.parse(lsGet(FGKEY)||"{}")}catch(e){}o.water=n;lsSet(FGKEY,JSON.stringify(o))}
-const MAC=[["p","Eiwit",4,"#ffa45c"],["c","Koolhydraten",4,"#5cb3ff"],["f","Vet",9,"#c8f04a"]];
+const MAC=[["p","Eiwit",4,"#ff6b3d"],["c","Koolhydraten",4,"#e64980"],["f","Vet",9,"#339af0"]];
 function tplLive(a){
   const k=kcalOf(a.p,a.c,a.f);
   const parts=MAC.map(([key,,m])=>num(a[key])*m),tot=parts.reduce((x,y)=>x+y,0)||1;
@@ -1055,6 +1095,7 @@ function render(){
   else html=viewContent();
   $("#app").innerHTML=banner+html;
   updateDatalists();
+  updatePill();
 }
 
 function weekStart(d){const x=new Date(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return iso(x)}
