@@ -973,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.3";
+const APP_VERSION="1.9.4";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1421,6 +1421,7 @@ function exerciseIndex(){
   const m=new Map();
   for(const w of S.workouts)for(const ex of (w.exercises||[])){
     const k=norm(ex.name);if(!k)continue;
+    if(!(ex.sets||[]).some(st=>num(st.kg)||num(st.reps)))continue;
     if(!m.has(k))m.set(k,{name:ex.name.trim(),count:0});
     m.get(k).count++;
   }
@@ -1467,12 +1468,17 @@ function render(){
   else if(needsBackup())banner='<button class="banner" data-act="settings" style="width:100%;text-align:left">💾 Je laatste backup is meer dan een week oud. Tik hier om een backup te maken.</button>';
   else if(!isStandalone()&&!S.hideInstall)banner='<div class="banner">📲 Tik in Safari op <b>Deel</b> → <b>Zet op beginscherm</b> en open de app daarna altijd via dat icoon.</div>';
   let html="";
-  if(S.mode==="loading")html='<div class="empty">Laden…</div>';
-  else if(S.tab==="train")html=viewTrain();
-  else if(S.tab==="prog")html=viewProg();
-  else if(S.tab==="food")html=viewFood();
-  else if(S.tab==="meas")html=viewMeas();
-  else html=viewContent();
+  try{
+    if(S.mode==="loading")html='<div class="empty">Laden…</div>';
+    else if(S.tab==="train")html=viewTrain();
+    else if(S.tab==="prog")html=viewProg();
+    else if(S.tab==="food")html=viewFood();
+    else if(S.tab==="meas")html=viewMeas();
+    else html=viewContent();
+  }catch(e){
+    console.error(e);
+    html='<header class="top"><div><h1>Oeps</h1></div>'+GEAR+'</header><div class="card" style="cursor:default"><b>Dit scherm kon niet geladen worden.</b><p class="small muted">Je gegevens zijn veilig. Probeer Updaten via het tandwieltje, of stuur deze melding naar Claude:</p><code class="small" style="word-break:break-all;color:#9be7f7">'+esc(S.tab+": "+(e&&e.message||e))+'</code></div>';
+  }
   $("#app").innerHTML=banner+html;
   updateDatalists();
   updatePill();
@@ -1569,6 +1575,7 @@ function viewProg(){
     }
   }
   sess.sort((a,b)=>a.date.localeCompare(b.date));
+  if(!sess.length)return h+'<div class="empty">Nog geen ingevulde sets voor deze oefening.</div>';
   const metrics=[["max","Max gewicht"],["e1rm","Geschat 1RM"],["vol","Volume"]];
   h+='<div class="seg" style="margin-bottom:10px">'+metrics.map(([k2,l])=>'<button data-metric="'+k2+'" class="'+(S.metric===k2?"on":"")+'">'+l+'</button>').join("")+'</div>';
   const key=S.metric==="max"?"max":S.metric==="e1rm"?"best":"vol";
