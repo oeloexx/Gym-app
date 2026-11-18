@@ -212,6 +212,20 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .tpl-ord{display:flex;flex-direction:column;gap:4px}
 .tpl-ord button{width:34px;height:26px;border-radius:8px;background:var(--card2);color:#22d3ee;font-size:11px}
 .tpl-ord button:disabled{opacity:.3}
+/* doelen & progressie */
+.goalrow{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid rgba(255,77,77,.25);border-radius:14px;padding:8px 10px;margin:0 0 8px;font-weight:700;font-size:14px;flex-wrap:wrap}
+.goalrow input{width:76px;padding:7px 8px;text-align:center;font-weight:700}
+.goalrow b{margin-left:auto;color:#ff8080;font-size:13px}.goalrow b.done{color:#22d3ee}
+.goalbar{height:6px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;margin:-2px 2px 10px}.goalbar i{display:block;height:100%;background:linear-gradient(90deg,#22d3ee,#e6fbff);border-radius:6px}
+.tpl-goal{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}.tpl-goal input{width:58px;padding:8px 4px;text-align:center}
+.exgoal{display:block;color:#ff8080!important;font-weight:600;margin-top:2px}
+.exprog{margin:8px 2px 0;padding:7px 10px;border-radius:10px;background:rgba(34,211,238,.14);color:#7fe7fb;font-size:13px;font-weight:800;animation:popIn .35s cubic-bezier(.2,1.3,.4,1)}
+.set.up input{border-color:rgba(34,211,238,.7);background:rgba(34,211,238,.1)}
+.set.up .no{color:#22d3ee;font-size:16px}
+.set.pr input{border-color:#fff;background:rgba(255,255,255,.12)}
+.set.pr .no{font-size:15px}
+.impb{font-style:normal;font-family:Inter;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:rgba(34,211,238,.18);color:#7fe7fb;vertical-align:2px;margin-left:4px}
+.impb.pr{background:rgba(255,255,255,.9);color:#00151b}
 /* oefeningen */
 .wk-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .wk-title{font-family:"Kaushan Script",cursive;font-size:34px;line-height:1.15;padding:0 6px 6px 0;background:linear-gradient(100deg,#ffffff,#38bdf8 50%,#e6fbff);-webkit-background-clip:text;background-clip:text;color:transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -973,7 +987,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.7";
+const APP_VERSION="2.0.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1352,7 +1366,7 @@ function seriesFor(k){const pts=[];for(const m of S.measure.slice().sort((a,b)=>
   if(v!=null&&v!=="")pts.push({d:m.date,v:num(v)})}return pts}
 function progressCard(){
   if(!S.measMetric||!PMAIN.some(x=>x[0]===S.measMetric)){const f=PMAIN.find(x=>seriesFor(x[0]).length);S.measMetric=f?f[0]:"weight"}
-  const [k,label,good]=PMAIN.find(x=>x[0]===S.measMetric),pts=seriesFor(k),u=MF[k][2];
+  const [k,label,good]=PMAIN.find(x=>x[0]===S.measMetric),pts=seriesFor(k),u=MF[k][2],bg=k==="weight"?bodyGoal():0;
   let h='<div class="section-label">Vooruitgang</div><div class="card prog" style="cursor:default"><div class="pchips">'+PMAIN.map(([kk,l])=>{const n=seriesFor(kk).length;
     return '<button class="pchip '+(kk===k?"on":"")+(n?"":" none")+'" data-act="measMetric" data-k="'+kk+'">'+l+'</button>'}).join("")+'</div>';
   if(!pts.length)return h+'<div class="empty" style="padding:26px 10px">Nog geen '+esc(label.toLowerCase())+' gemeten.</div></div>';
@@ -1362,7 +1376,10 @@ function progressCard(){
   h+='<div class="pstats"><div><span>Begin · '+esc(fmtDate(a.d,{day:"numeric",month:"short"}))+'</span><b>'+f(a.v)+(u?' '+u:'')+'</b></div>'+
      '<div class="parr">→</div><div><span>Nu · '+esc(fmtDate(b.d,{day:"numeric",month:"short"}))+'</span><b>'+f(b.v)+(u?' '+u:'')+'</b></div>'+
      '<div class="pdiff '+cls+'">'+(diff>0?"+":diff<0?"−":"±")+f(Math.abs(diff))+(u?' '+u:'')+'<small>'+(diff>0?"+":diff<0?"−":"")+fmtKg(Math.abs(Math.round(pct*10)/10))+'%</small></div></div>';
-  h+=pts.length>1?'<div class="pchart">'+chartSvg(pts)+'</div>':'<div class="small muted" style="margin-top:10px">Na je volgende meting zie je hier de lijn van begin tot nu.</div>';
+  if(k==="weight"){const cur=pts[pts.length-1].v,left=bg?bg-cur:0;
+    h+='<div class="goalrow"><span>🎯 Streefgewicht</span><input data-bodygoal inputmode="decimal" placeholder="bv. 75" value="'+(bg||"")+'"><span class="muted">kg</span>'+
+      (bg?'<b class="'+(Math.abs(left)<.25?"done":"")+'">'+(Math.abs(left)<.25?"✓ Behaald!":"nog "+fmtKg(Math.abs(left))+" kg "+(left>0?"erbij":"eraf"))+'</b>':'')+'</div>'}
+  h+=pts.length>1||bg?'<div class="pchart">'+chartSvg(pts,bg)+'</div>':'<div class="small muted" style="margin-top:10px">Na je volgende meting zie je hier de lijn van begin tot nu.</div>';
   h+='<div class="small muted" style="margin-top:6px">'+pts.length+(pts.length===1?' meting':' metingen')+(pts.length>1?' over '+Math.max(1,Math.round((toD(b.d)-toD(a.d))/864e5))+' dagen':'')+(k==="fatmass"?' · vetmassa wordt berekend uit gewicht × vet % als hij niet op je scan staat':'')+'</div>';
   return h+'</div>';
 }
@@ -1592,10 +1609,52 @@ function viewTrain(){
     const d=toD(w.date);
     h+='<button class="card wcard" data-act="editWorkout" data-id="'+esc(w.id)+'">'+
       '<div class="dblock"><b>'+d.getDate()+'</b><span>'+esc(d.toLocaleDateString("nl-NL",{weekday:"short"}))+'</span></div>'+
-      '<div class="wbody"><div class="row between"><span class="w-name" style="margin:0">'+esc(w.name||"Training")+'</span><span class="meta">'+setCount(w)+(setCount(w)===1?' set':' sets')+' · '+kShort(volume(w))+' kg</span></div>'+
+      '<div class="wbody"><div class="row between"><span class="w-name" style="margin:0">'+esc(w.name||"Training")+(()=>{const im=improvements(w),pr=im.filter(x=>x.pr).length;return im.length?' <em class="impb'+(pr?' pr':'')+'">'+(pr?'🏆 '+pr:'↑ '+im.length)+'</em>':''})()+'</span><span class="meta">'+setCount(w)+(setCount(w)===1?' set':' sets')+' · '+kShort(volume(w))+' kg</span></div>'+
       '<div class="chipsx">'+(chips||'<span class="muted small">Geen oefeningen</span>')+'</div></div></button>';
   }
   return h;
+}
+
+/* ---------- doelen & progressie-signalen ---------- */
+const EGKEY="gym_ex_goals",BGKEY="gym_body_goal";
+const exGoals=()=>{try{return JSON.parse(lsGet(EGKEY)||"{}")||{}}catch(e){return {}}};
+const exGoal=n=>num(exGoals()[norm(n)])||0;
+function setExGoal(n,v){const g=exGoals(),k=norm(n);v=num(v);if(v>0)g[k]=Math.round(v*100)/100;else delete g[k];lsSet(EGKEY,JSON.stringify(g))}
+const bodyGoal=()=>num(lsGet(BGKEY))||0;
+function exStats(ex){let max=0,best=0;for(const s of ex.sets||[]){const kg=num(s.kg),r=num(s.reps);if(kg>max)max=kg;const e=e1rm(kg,r)||(kg?0:r/1000);if(e>best)best=e}return {max,best}}
+function allTimeBefore(name,excludeId,date){let max=0,best=0;const k=norm(name);
+  for(const w of S.workouts){if(w.id===excludeId||w.date>date)continue;for(const ex of w.exercises||[])if(norm(ex.name)===k){const st=exStats(ex);if(st.max>max)max=st.max;if(st.best>best)best=st.best}}
+  return {max,best}}
+function setVerdict(name,exId,date,j,kg,reps,prev,atb){
+  kg=num(kg);reps=num(reps);if(!reps)return "";
+  if(kg>0&&atb.best>0&&e1rm(kg,reps)>atb.best+.01)return "pr";
+  const p=prev&&prev.ex.sets[j];if(!p)return "";
+  const pk=num(p.kg),pr=num(p.reps);
+  if(kg>pk+.001&&reps>=Math.max(1,pr-2))return "up";
+  if(Math.abs(kg-pk)<.001&&reps>pr)return "up";
+  return "";
+}
+function improvements(w){
+  const out=[];
+  for(const ex of w.exercises||[]){
+    const prev=lastTimeFor(ex.name,w.id,w.date);if(!prev)continue;
+    const cur=exStats(ex),pst=exStats(prev.ex),atb=allTimeBefore(ex.name,w.id,w.date);
+    if(cur.best<=pst.best+.01)continue;
+    let txt;
+    if(cur.max>pst.max+.001)txt="+"+fmtKg(cur.max-pst.max)+" kg";
+    else{const bp=Math.max(0,...(prev.ex.sets||[]).filter(s=>num(s.kg)===cur.max).map(s=>num(s.reps))),bc=Math.max(0,...(ex.sets||[]).filter(s=>num(s.kg)===cur.max).map(s=>num(s.reps)));txt=bc>bp?"+"+(bc-bp)+" reps":"sterker"}
+    out.push({name:ex.name,txt,pr:cur.best>atb.best+.01&&cur.max>0});
+  }
+  return out;
+}
+function refreshSetBadges(i){
+  const d=S.draft;if(!d||S.sheet!=="workout")return;const ex=d.exercises[i];if(!ex)return;
+  const prev=lastTimeFor(ex.name,d.id,d.date),atb=allTimeBefore(ex.name,d.id,d.date),rows=document.querySelectorAll('#sheet .ex')[i];if(!rows)return;
+  let ups=0,prs=0;
+  rows.querySelectorAll(".set").forEach((row,j)=>{const s=ex.sets[j];if(!s)return;const v=setVerdict(ex.name,ex.exId,d.date,j,s.kg,s.reps,prev,atb);
+    row.classList.toggle("up",v==="up");row.classList.toggle("pr",v==="pr");const no=row.querySelector(".no");if(no)no.textContent=v==="pr"?"🏆":v==="up"?"↑":String(j+1);
+    if(v==="up")ups++;if(v==="pr")prs++});
+  const tag=rows.querySelector(".exprog");if(tag){tag.innerHTML=prs?'🏆 Nieuw record!':ups?'↑ Beter dan vorige keer ('+ups+(ups===1?' set':' sets')+')':'';tag.style.display=prs||ups?"":"none"}
 }
 
 function viewProg(){
@@ -1621,7 +1680,11 @@ function viewProg(){
   const metrics=[["max","Max gewicht"],["e1rm","Geschat 1RM"],["vol","Volume"]];
   h+='<div class="seg" style="margin-bottom:10px">'+metrics.map(([k2,l])=>'<button data-metric="'+k2+'" class="'+(S.metric===k2?"on":"")+'">'+l+'</button>').join("")+'</div>';
   const key=S.metric==="max"?"max":S.metric==="e1rm"?"best":"vol";
-  h+='<div class="chart">'+chartSvg(sess.map(s=>({d:s.date,v:s[key]})))+'</div>';
+  const goal=exGoal(S.progEx),curMax=Math.max(...sess.map(s=>s.max));
+  h+='<div class="goalrow"><span>🎯 Doel</span><input data-exgoal="'+esc(S.progEx)+'" inputmode="decimal" placeholder="bv. 100" value="'+(goal||"")+'"><span class="muted">kg</span>'+
+     (goal?'<b class="'+(curMax>=goal?"done":"")+'">'+(curMax>=goal?"✓ Behaald!":"nog "+fmtKg(goal-curMax)+" kg")+'</b>':'<span class="small muted">vul je streefgewicht in</span>')+'</div>';
+  if(goal)h+='<div class="goalbar"><i style="width:'+Math.min(100,curMax/goal*100).toFixed(1)+'%"></i></div>';
+  h+='<div class="chart">'+chartSvg(sess.map(s=>({d:s.date,v:s[key]})),key==="vol"?0:goal,{prs:true})+'</div><div class="small muted" style="margin:-4px 2px 10px">Witte ring = nieuw record · rode stippellijn = je doel</div>';
   let prMax=null,prE=null;
   for(const s of sess){if(!prMax||s.max>prMax.max)prMax=s;if(!prE||s.best>prE.best)prE=s}
   const first=sess[0],lastS=sess[sess.length-1];
@@ -1635,10 +1698,10 @@ function viewProg(){
   return h;
 }
 
-function chartSvg(pts){
-  const W=340,H=170,pl=36,pr=12,pt=14,pb=26;
+function chartSvg(pts,goal,opt){
+  opt=opt||{};const W=340,H=170,pl=36,pr=12,pt=14,pb=26;
   if(!pts.length)return "";
-  const vs=pts.map(p=>p.v);let lo=Math.min(...vs),hi=Math.max(...vs);
+  const vs=pts.map(p=>p.v).concat(goal>0?[goal]:[]);let lo=Math.min(...vs),hi=Math.max(...vs);
   if(hi===lo){hi+=1;lo=Math.max(0,lo-1)}
   const padV=(hi-lo)*.12;lo=Math.max(0,lo-padV);hi+=padV;
   const x=i=>pts.length===1?(pl+(W-pl-pr)/2):pl+i*(W-pl-pr)/(pts.length-1);
@@ -1647,11 +1710,13 @@ function chartSvg(pts){
   for(let i=0;i<=3;i++){const v=lo+(hi-lo)*i/3;const yy=y(v);g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+yy+'" y2="'+yy+'" stroke="#2a2e37" stroke-width="1"/><text x="'+(pl-6)+'" y="'+(yy+4)+'" fill="#8b919c" font-size="10" text-anchor="end">'+Math.round(v)+'</text>'}
   const d=pts.map((p,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(p.v).toFixed(1)).join(" ");
   const area=d+" L"+x(pts.length-1).toFixed(1)+" "+(H-pb)+" L"+x(0).toFixed(1)+" "+(H-pb)+" Z";
-  const dots=pts.map((p,i)=>'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="'+(pts.length>30?2:3.5)+'" fill="#22d3ee"/>').join("");
+  let run=-Infinity;const dots=pts.map((p,i)=>{const isPr=opt.prs&&i>0&&p.v>run+.001;run=Math.max(run,p.v);
+    return (isPr?'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="7" fill="none" stroke="#fff" stroke-width="1.6" opacity=".9"/>':'')+'<circle cx="'+x(i).toFixed(1)+'" cy="'+y(p.v).toFixed(1)+'" r="'+(pts.length>30?2:3.5)+'" fill="#22d3ee"/>'}).join("");
+  const gl=goal>0?'<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(goal).toFixed(1)+'" y2="'+y(goal).toFixed(1)+'" stroke="#ff4d4d" stroke-width="1.8" stroke-dasharray="6 5"/><rect x="'+(W-pr-62)+'" y="'+(y(goal)-17).toFixed(1)+'" width="62" height="14" rx="4" fill="rgba(255,77,77,.18)"/><text x="'+(W-pr-4)+'" y="'+(y(goal)-6.5).toFixed(1)+'" fill="#ff8080" font-size="10" font-weight="700" text-anchor="end">Doel '+fmtKg(goal)+'</text>':'';
   const lbl=(i,anchor)=>'<text x="'+x(i)+'" y="'+(H-8)+'" fill="#8b919c" font-size="10" text-anchor="'+anchor+'">'+esc(fmtDate(pts[i].d,{day:"numeric",month:"short"}))+'</text>';
   return '<svg viewBox="0 0 '+W+' '+H+'"><defs><linearGradient id="ga" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#22d3ee" stop-opacity=".25"/><stop offset="1" stop-color="#22d3ee" stop-opacity="0"/></linearGradient></defs>'+g+
     (pts.length>1?'<path d="'+area+'" fill="url(#ga)"/><path d="'+d+'" fill="none" stroke="#22d3ee" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>':"")+dots+
-    lbl(0,pts.length===1?"middle":"start")+(pts.length>1?lbl(pts.length-1,"end"):"")+'</svg>';
+    gl+lbl(0,pts.length===1?"middle":"start")+(pts.length>1?lbl(pts.length-1,"end"):"")+'</svg>';
 }
 
 function viewContent(){
@@ -1695,6 +1760,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
+  setTimeout(()=>{if(S.sheet==="workout"&&S.draft)S.draft.exercises.forEach((_,i)=>refreshSetBadges(i))},0);
   $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
@@ -1735,8 +1801,10 @@ function sheetWorkout(){
   (d.exercises||[]).forEach((ex,i)=>{
     const prev=lastTimeFor(ex.name,d.id,d.date),e=exFor(ex),done=(ex.sets||[]).filter(s=>num(s.reps)).length;
     h+='<div class="ex"><div class="ex-head"><button class="exph-btn" data-act="exInfo" data-i="'+i+'" aria-label="Bekijk oefening">'+exThumb(e,"exph")+'</button>'+
-       '<div class="ex-meta"><b>'+esc(ex.name||"Oefening")+'</b><span>'+(e?'<i class="mtag">'+esc(e.muscle)+'</i>':'')+(ex.sets||[]).length+' sets'+(done?' · '+done+' ingevuld':'')+'</span></div>'+
+       '<div class="ex-meta"><b>'+esc(ex.name||"Oefening")+'</b><span>'+(e?'<i class="mtag">'+esc(e.muscle)+'</i>':'')+(ex.sets||[]).length+' sets'+(done?' · '+done+' ingevuld':'')+'</span>'+
+       (exGoal(ex.name)?(()=>{const g=exGoal(ex.name),m=Math.max(exStats(ex).max,allTimeBefore(ex.name,d.id,d.date).max);return '<span class="exgoal">🎯 Doel '+fmtKg(g)+' kg · '+(m>=g?'✓ behaald':'nog '+fmtKg(g-m)+' kg')+'</span>'})():'')+'</div>'+
        '<button class="iconbtn" data-act="delEx" data-i="'+i+'" aria-label="Verwijder oefening">'+ICON.trash+'</button></div>';
+    h+='<div class="exprog" style="display:none"></div>';
     if(prev)h+='<div class="prev">Vorige keer ('+esc(fmtDate(prev.w.date,{day:"numeric",month:"short"}))+'): '+esc(setsStr(prev.ex.sets))+'</div>';
     h+='<div class="sets"><div class="set-h"><span>Set</span><span>kg</span><span>reps</span><span></span></div>';
     (ex.sets||[]).forEach((s,j)=>{
@@ -1782,6 +1850,7 @@ function sheetTpl(){
       '<div class="ex-meta"><b>'+esc(ex.name)+'</b><span>'+ex.sets+' sets</span></div>'+
       '<div class="tpl-ord"><button data-act="tplUp" data-i="'+i+'" aria-label="Omhoog"'+(i?'':' disabled')+'>▲</button><button data-act="tplDown" data-i="'+i+'" aria-label="Omlaag"'+(i<d.exercises.length-1?'':' disabled')+'>▼</button></div></div>'+
       '<div class="tpl-ctl"><span class="small muted">Aantal sets</span><div class="stepper"><button data-act="tplSets" data-i="'+i+'" data-d="-1">−</button><input value="'+ex.sets+'" readonly><button data-act="tplSets" data-i="'+i+'" data-d="1">+</button></div>'+
+      '<label class="tpl-goal">🎯<input data-exgoal="'+esc(ex.name)+'" inputmode="decimal" placeholder="doel" value="'+(exGoal(ex.name)||"")+'">kg</label>'+
       '<button class="iconbtn" data-act="delEx" data-i="'+i+'" aria-label="Verwijder">'+ICON.trash+'</button></div></div>';
   });
   if(d.exercises.length)h+='<button class="btn primary block big" data-act="addEx">+ Oefening toevoegen</button>';
@@ -1932,8 +2001,10 @@ document.addEventListener("click",async ev=>{
       a.disabled=true;
       const before=dayInfo().total;
       try{await Store.save("workouts",w);closeSheet();
-        const after=dayInfo().total,ms=MILESTONES.find(m=>m[0]>before&&m[0]<=after);
-        if(ms)celebrate(after+(after===1?" dag!":" dagen!"),"Mijlpaal “"+ms[1]+"” "+ms[2]+" gehaald. Lekker bezig!");
+        const after=dayInfo().total,ms=MILESTONES.find(m=>m[0]>before&&m[0]<=after),imp=improvements(w);
+        if(imp.length){const prs=imp.filter(x=>x.pr).length;
+          celebrate(prs?(prs===1?"Nieuw record!":prs+" nieuwe records!"):"Progressie! 📈",imp.slice(0,3).map(x=>(x.pr?"🏆 ":"↑ ")+x.name+" "+x.txt).join("  ·  ")+(imp.length>3?"  ·  en nog "+(imp.length-3):"")+(ms?"  ·  Mijlpaal "+ms[1]+" "+ms[2]:""))}
+        else if(ms)celebrate(after+(after===1?" dag!":" dagen!"),"Mijlpaal “"+ms[1]+"” "+ms[2]+" gehaald. Lekker bezig!");
         else if(after>before)toast("Dag "+after+" gelogd 💪");
         else toast("Training opgeslagen 💪")}catch(e){a.disabled=false;toast(failMsg(e))}
       break}
@@ -1991,12 +2062,14 @@ document.addEventListener("click",async ev=>{
 document.addEventListener("input",ev=>{
   const tt=ev.target;
   if(tt.dataset.mv&&S.draft&&S.draft.v){S.draft.v[tt.dataset.mv]=tt.value;if(S.draft.auto)delete S.draft.auto[tt.dataset.mv];return}
+  if(tt.dataset.exgoal!=null){setExGoal(tt.dataset.exgoal,tt.value);clearTimeout(window.__gT);window.__gT=setTimeout(()=>{if(S.tab==="prog"&&!S.sheet){const y=window.scrollY;render();window.scrollTo(0,y);const el=document.querySelector('[data-exgoal]');if(el){el.focus();const v=el.value;el.value="";el.value=v}}},700);return}
+  if(tt.dataset.bodygoal!=null){const v=num(tt.value);lsSet(BGKEY,v>0?String(v):"");clearTimeout(window.__gT);window.__gT=setTimeout(()=>{const y=window.scrollY;render();window.scrollTo(0,y)},900);return}
   if(tt.id==="foodQ"&&S.draft){S.draft.q=tt.value;const r=$("#foodResults");if(r)r.innerHTML=foodResults(tt.value);return}
   if(tt.id==="foodG"&&S.draft){S.draft.grams=tt.value;const fc=$("#foodCalc");if(fc)fc.innerHTML=calcBox(calc(S.draft.item.per100,num(tt.value)));return}
   if(tt.dataset.tpl){tplUpdate(tt.dataset.tpl,tt.value);return}
   const t=ev.target;if(!S.draft||!t.dataset.f)return;
   const f=t.dataset.f;
-  if(t.dataset.set!=null){S.draft.exercises[+t.dataset.ex].sets[+t.dataset.set][f]=t.value}
+  if(t.dataset.set!=null){S.draft.exercises[+t.dataset.ex].sets[+t.dataset.set][f]=t.value;refreshSetBadges(+t.dataset.ex)}
   else if(f==="exname"){S.draft.exercises[+t.dataset.ex].name=t.value}
   else S.draft[f]=t.value;
   if(S.sheet==="food"&&S.draft.mode==="manual"){
