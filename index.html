@@ -973,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.6";
+const APP_VERSION="1.9.7";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1319,7 +1319,7 @@ async function saveFoodEntry(){
 }
 
 /* ---------- metingen ---------- */
-const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vet","%",3,60],["fatmass","Vetmassa","kg",2,80],["smm","SSM","kg",10,80],["bmi","BMI","",12,60],["score","Indexscore","punten",30,120]];
+const MFIELDS=[["weight","Gewicht","kg",30,250],["fat","Vet","%",3,60],["fatmass","Vetmassa","kg",2,80],["smm","SMM","kg",10,80],["bmi","BMI","",12,60],["score","Indexscore","punten",30,120]];
 const MF=Object.fromEntries(MFIELDS.map(f=>[f[0],f]));
 const AIKEY="gym_ai_key";
 const sortedMeasures=()=>S.measure.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
@@ -1346,7 +1346,7 @@ function viewMeas(){
   }
   return h+aiHint();
 }
-const PMAIN=[["weight","Gewicht",0],["fat","Vet %",-1],["fatmass","Vetmassa",-1],["smm","SSM",1],["bmi","BMI",0]];
+const PMAIN=[["weight","Gewicht",0],["fat","Vet %",-1],["fatmass","Vetmassa",-1],["smm","SMM",1],["bmi","BMI",0]];
 function seriesFor(k){const pts=[];for(const m of S.measure.slice().sort((a,b)=>a.date.localeCompare(b.date)||(a.createdAt||0)-(b.createdAt||0))){
   let v=m.v&&m.v[k];if((v==null||v==="")&&k==="fatmass"&&m.v&&m.v.weight&&m.v.fat)v=num(m.v.weight)*num(m.v.fat)/100;
   if(v!=null&&v!=="")pts.push({d:m.date,v:num(v)})}return pts}
@@ -1431,7 +1431,7 @@ async function aiRead(dataUrl){
   if(key){
     const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"x-api-key":key,"anthropic-version":"2023-06-01","content-type":"application/json","anthropic-dangerous-direct-browser-access":"true"},
       body:JSON.stringify({model:"claude-haiku-5-5",max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:dataUrl.split(",")[1]}},
-        {type:"text",text:"This photo shows body measurement results, most likely an InBody result sheet (InBody 270/570 printout or InBody app screenshot), otherwise a smart-scale app or tape-measure notes. Extract the measured values, never the normal-range numbers printed next to them. InBody labels: Weight, Skeletal Muscle Mass (SMM), Body Fat Mass, PBF (Percent Body Fat), BMI, Fat Free Mass, Total Body Water (in L), Visceral Fat Level, Basal Metabolic Rate, InBody Score. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %, PBF / Vetpercentage), fatmass (body fat mass in kg / Vetmassa), smm (skeletal muscle mass in kg / SSM), bmi, score (InBody score, the number before /100 points), date (YYYY-MM-DD of the measurement date, e.g. Datum/Tijd 06.01.2025 means 2025-01-06; else null). Use the current measurement, not the history chart at the bottom. Convert lb to kg."}]}]})});
+        {type:"text",text:"This photo shows body measurement results, most likely an InBody result sheet (InBody 270/570 printout or InBody app screenshot), otherwise a smart-scale app or tape-measure notes. Extract the measured values, never the normal-range numbers printed next to them. InBody labels: Weight, Skeletal Muscle Mass (SMM), Body Fat Mass, PBF (Percent Body Fat), BMI, Fat Free Mass, Total Body Water (in L), Visceral Fat Level, Basal Metabolic Rate, InBody Score. Reply with ONLY a JSON object with these keys, numbers with a dot as decimal separator, or null when not shown: weight (kg), fat (body fat %, PBF / Vetpercentage), fatmass (body fat mass in kg / Vetmassa), smm (skeletal muscle mass in kg, labelled SMM or in Dutch SSM / Skeletspiermassa), bmi, score (InBody score, the number before /100 points), date (YYYY-MM-DD of the measurement date, e.g. Datum/Tijd 06.01.2025 means 2025-01-06; else null). Use the current measurement, not the history chart at the bottom. Convert lb to kg."}]}]})});
     if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(r.status===401?"API-sleutel klopt niet":(e.error&&e.error.message)||("fout "+r.status))}
     const j=await r.json(),txt=(j.content||[]).map(c=>c.text||"").join(""),m=txt.match(/\{[\s\S]*\}/);
     const o=m?JSON.parse(m[0]):{};return {v:cleanVals(o),date:/^\d{4}-\d{2}-\d{2}$/.test(o.date||"")?o.date:null,engine:"Claude AI"};
