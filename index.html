@@ -973,7 +973,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="1.9.5";
+const APP_VERSION="1.9.6";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1214,27 +1214,69 @@ function zxHints(){const Z=window.ZXing,h=new Map();
   h.set(Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.UPC_A,Z.BarcodeFormat.UPC_E,Z.BarcodeFormat.CODE_128]);
   h.set(Z.DecodeHintType.TRY_HARDER,true);return h}
 let SCAN=null;
+function camErr(e){const n=e&&e.name||"";
+  if(n==="NotAllowedError"||n==="SecurityError")return "Geen toestemming voor de camera. Ga naar Instellingen → Apps → Safari → Camera en kies Vraag of Sta toe. Sluit de app daarna helemaal af en open hem opnieuw.";
+  if(n==="NotFoundError"||n==="OverconstrainedError")return "Geen camera gevonden. Kies een foto of typ de cijfers.";
+  if(n==="NotReadableError"||n==="AbortError")return "De camera is bezet door een andere app. Sluit die en probeer opnieuw.";
+  return "Camera starten lukte niet ("+(n||e&&e.message||"onbekend")+"). Kies een foto of typ de cijfers."}
+function scMsg(t){const m=$("#scMsg");if(m)m.textContent=t}
+function decodeCanvas(reader,c){const Z=ZXing,src=new Z.HTMLCanvasElementLuminanceSource(c);
+  for(const B of [Z.HybridBinarizer,Z.GlobalHistogramBinarizer]){try{return reader.decodeWithState(new Z.BinaryBitmap(new B(src))).getText()}catch(e){}}
+  return null}
 async function openScanner(){
   let el=$("#scanner");if(!el){el=document.createElement("div");el.id="scanner";document.body.appendChild(el)}
-  el.innerHTML='<video id="scVid" playsinline muted autoplay></video><div class="sc-shade"></div><div class="sc-frame"><i></i></div>'+
+  el.innerHTML='<video id="scVid" playsinline webkit-playsinline muted autoplay></video><div class="sc-shade"></div><div class="sc-frame"><i></i></div>'+
     '<div class="sc-top"><button data-sc="close">Annuleer</button><span>Barcode scannen</span><span style="width:70px"></span></div>'+
     '<div class="sc-msg" id="scMsg">Camera starten…</div>'+
     '<div class="sc-bottom"><label class="sc-btn">📷 Foto van barcode<input type="file" accept="image/*" id="scFile" hidden></label>'+
     '<form id="scForm" class="sc-type"><input id="scCode" inputmode="numeric" placeholder="Of typ de cijfers onder de barcode" autocomplete="off"><button>Zoek</button></form></div>';
   el.classList.add("open");document.body.classList.add("lock");
-  try{await loadZX()}catch(e){$("#scMsg").textContent="Scanner kon niet laden. Typ de cijfers hieronder in.";return}
-  try{
-    const r=new ZXing.BrowserMultiFormatReader(zxHints(),300);SCAN={r,done:false};
-    $("#scMsg").textContent="Richt de camera op de barcode";
-    await r.decodeFromConstraints({video:{facingMode:{ideal:"environment"},width:{ideal:1280},height:{ideal:720}}},"scVid",(res)=>{if(res&&SCAN&&!SCAN.done){SCAN.done=true;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}gotBarcode(res.getText())}});
-  }catch(e){$("#scMsg").textContent="Geen toegang tot de camera. Kies een foto of typ de cijfers.";}
+  try{await loadZX()}catch(e){scMsg("Scanner kon niet laden (geen internet?). Typ de cijfers hieronder.");return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){scMsg("Camera is hier niet beschikbaar. Open de app via het icoon op je beginscherm, of kies een foto.");return}
+  let stream;
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}}})}
+  catch(e){try{stream=await navigator.mediaDevices.getUserMedia({audio:false,video:true})}catch(e2){scMsg(camErr(e2));return}}
+  if(!$("#scanner")||!$("#scanner").classList.contains("open")){stream.getTracks().forEach(t=>t.stop());return}
+  const v=$("#scVid");v.srcObject=stream;v.muted=true;try{await v.play()}catch(e){}
+  try{const tr=stream.getVideoTracks()[0];if(tr&&tr.applyConstraints)tr.applyConstraints({advanced:[{focusMode:"continuous"}]}).catch(()=>{})}catch(e){}
+  const reader=new ZXing.MultiFormatReader();reader.setHints(zxHints());
+  const c=document.createElement("canvas"),x=c.getContext("2d",{willReadFrequently:true});
+  SCAN={stream,done:false,n:0,t0:Date.now()};
+  scMsg("Richt de camera op de barcode");
+  const tick=()=>{
+    if(!SCAN||SCAN.done)return;
+    if(v.readyState>=2&&v.videoWidth){
+      const vw=v.videoWidth,vh=v.videoHeight,cw=Math.round(vw*.86),ch=Math.round(Math.min(vh*.5,cw*.62)),sc=Math.min(1,1000/cw);
+      c.width=Math.round(cw*sc);c.height=Math.round(ch*sc);
+      x.drawImage(v,(vw-cw)/2,(vh-ch)/2,cw,ch,0,0,c.width,c.height);
+      SCAN.n++;
+      let code=decodeCanvas(reader,c);
+      if(!code&&SCAN.n%3===0){c.width=Math.round(vw*Math.min(1,900/vw));c.height=Math.round(vh*c.width/vw);x.drawImage(v,0,0,c.width,c.height);code=decodeCanvas(reader,c)}
+      if(code){SCAN.done=true;try{navigator.vibrate&&navigator.vibrate(60)}catch(e){}gotBarcode(code);return}
+      const sec=(Date.now()-SCAN.t0)/1000;
+      if(sec>8&&!SCAN.tip){SCAN.tip=1;scMsg("Lukt het niet? Houd de barcode op 10 à 20 cm, recht en goed belicht. Of maak een foto.")}
+    }
+    SCAN.timer=setTimeout(tick,110);
+  };
+  tick();
 }
-function closeScanner(){try{SCAN&&SCAN.r&&SCAN.r.reset()}catch(e){}SCAN=null;const el=$("#scanner");if(el){el.classList.remove("open");el.innerHTML=""}if(!S.sheet)document.body.classList.remove("lock")}
+function closeScanner(){if(SCAN){SCAN.done=true;clearTimeout(SCAN.timer);try{SCAN.stream&&SCAN.stream.getTracks().forEach(t=>t.stop())}catch(e){}}SCAN=null;
+  const el=$("#scanner");if(el){el.classList.remove("open");el.innerHTML=""}if(!S.sheet)document.body.classList.remove("lock")}
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
 async function scanFromFile(file){
-  const m=$("#scMsg");if(m)m.textContent="Foto lezen…";
-  try{await loadZX();const url=URL.createObjectURL(file);const r=new ZXing.BrowserMultiFormatReader(zxHints());
-    const res=await r.decodeFromImageUrl(url);URL.revokeObjectURL(url);gotBarcode(res.getText())}
-  catch(e){if(m)m.textContent="Geen barcode gevonden op de foto. Probeer het dichterbij of typ de cijfers."}
+  scMsg("Foto lezen…");
+  try{
+    await loadZX();const im=await loadImg(file),reader=new ZXing.MultiFormatReader();reader.setHints(zxHints());
+    const c=document.createElement("canvas"),x=c.getContext("2d",{willReadFrequently:true});
+    const tries=[];for(const max of [1400,900,2000])for(const rot of [0,90])tries.push([max,rot,1]);tries.push([1200,0,.6]);
+    for(const [max,rot,crop] of tries){
+      const sw=im.width*crop,sh=im.height*crop,sx=(im.width-sw)/2,sy=(im.height-sh)/2,sc=Math.min(1,max/Math.max(sw,sh)),w=Math.round(sw*sc),h=Math.round(sh*sc);
+      if(rot){c.width=h;c.height=w;x.save();x.translate(h/2,w/2);x.rotate(Math.PI/2);x.drawImage(im,sx,sy,sw,sh,-w/2,-h/2,w,h);x.restore()}
+      else{c.width=w;c.height=h;x.drawImage(im,sx,sy,sw,sh,0,0,w,h)}
+      const code=decodeCanvas(reader,c);if(code){gotBarcode(code);return}
+    }
+    scMsg("Geen barcode gevonden op de foto. Maak hem van dichterbij, recht en scherp, of typ de cijfers.");
+  }catch(e){scMsg("Foto lezen mislukt. Typ de cijfers onder de barcode.")}
 }
 async function gotBarcode(code){
   code=String(code).replace(/\D/g,"");if(code.length<6){toast("Ongeldige barcode");return}
