@@ -228,6 +228,15 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .set.pr .no{font-size:15px}
 .impb{font-style:normal;font-family:Inter;font-size:11px;font-weight:800;padding:2px 7px;border-radius:7px;background:rgba(34,211,238,.18);color:#7fe7fb;vertical-align:2px;margin-left:4px}
 .impb.pr{background:rgba(255,255,255,.9);color:#00151b}
+/* sync */
+.gear{position:relative}
+body[data-sync="ok"] .gear::after,body[data-sync="busy"] .gear::after,body[data-sync="err"] .gear::after{content:"";position:absolute;right:5px;top:5px;width:8px;height:8px;border-radius:50%;background:#22d3ee;box-shadow:0 0 0 2px #0b0c0f}
+body[data-sync="busy"] .gear::after{animation:blink 1s ease-in-out infinite}
+body[data-sync="err"] .gear::after{background:#ff5c5c}
+@keyframes blink{50%{opacity:.25}}
+.sync p{margin:6px 0 10px;line-height:1.5}
+.sync-steps{margin:0 0 12px;padding-left:20px;line-height:1.6;color:#cfd6df}.sync-steps a{color:#22d3ee}
+#syncStat{display:flex;align-items:center;gap:8px}
 /* prestaties */
 .card.wcard,.card.mrowc,.meal,.hist div,.pk-card{content-visibility:auto;contain-intrinsic-size:auto 86px}
 /* oefeningen */
@@ -587,6 +596,42 @@ nav.tabs svg{width:24px;height:24px;flex:none}
 .wl-ask input:focus{border-color:#38bdf8}
 @media (prefers-reduced-motion:reduce){#welcome *{animation:none!important;transition:none!important}
   #welcome .wl-top,#welcome .wl-greet,#welcome .wl-quote,#welcome .wl-bottom{opacity:1}#welcome .wl-name{clip-path:none}#welcome .wl-logo,#welcome .wl-mono{display:none}}
+
+/* ===== brede opmaak (laptop / desktop) ===== */
+@media (min-width:900px){
+  :root{--side:236px}
+  nav.tabs{top:0;bottom:0;left:0;right:auto;width:var(--side);padding:28px 16px;flex-direction:column;justify-content:flex-start;background:rgba(10,12,15,.96);border-right:1px solid var(--line)}
+  nav.tabs::before{content:"Gym";display:block;font-family:"Kaushan Script",cursive;font-size:38px;line-height:1.2;padding:0 8px 18px;background:linear-gradient(100deg,#ffffff,#38bdf8 50%,#e6fbff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  nav.tabs .in{flex-direction:column;gap:8px;max-width:none}
+  nav.tabs button{flex:none!important;height:52px;justify-content:flex-start;padding:0 16px;gap:12px!important;border-radius:14px}
+  nav.tabs button span{max-width:none;opacity:1;font-size:15px}
+  nav.tabs button:not(.on){background:transparent;border-color:transparent}
+  nav.tabs button:not(.on):hover{background:rgba(255,255,255,.05)}
+  .app{max-width:none;margin:0 0 0 var(--side);padding:34px 48px 60px;column-count:2;column-gap:28px;column-fill:balance}
+  @media (min-width:1500px){.app{column-count:3}}
+  .app>*{break-inside:avoid}
+  .app>header.top,.app>.banner,.app>.upd,.app>.chips,.app>.daynav,.app>.empty,.app>.mbtns,.app>.field:has(#progSel),.app>.seg{column-span:all}
+  .section-label{break-after:avoid}
+  .wt-row{margin:0;padding:2px 0 6px}
+  .mtiles{grid-template-columns:repeat(4,1fr)}
+  .hero,.card,.stat,.meal,.water,.list,.hist,.chart,.recs,.prog,.today,.goalrow{margin-bottom:12px}
+  .stats{margin-bottom:12px}
+  .btn.primary.block.big{margin-bottom:12px}
+  header.top h1{font-size:56px}
+  .fab{right:40px;bottom:40px}
+  .toast{bottom:40px;left:calc(50% + var(--side)/2)}
+  #macroPill{left:calc(var(--side) + 40px);right:40px;max-width:640px}
+  .sheet-wrap{background:rgba(0,0,0,.6)}
+  .sheet{top:4vh;bottom:4vh;left:calc(var(--side) + 40px);right:40px;max-width:720px;margin:0 auto;border-radius:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);border:1px solid var(--line)}
+  .pk{top:4vh;bottom:4vh;left:calc(var(--side) + 40px);right:40px;max-width:900px;border-radius:22px}
+  .pk-grid{grid-template-columns:repeat(4,1fr)}
+  .wl-content{max-width:640px;margin:0 auto;left:0;right:0}
+  #scanner .sc-frame{left:30%;right:30%}
+  .celebrate .cb{max-width:380px}
+  input,select,textarea{font-size:15px}
+  button:hover{filter:brightness(1.08)}
+  ::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:10px}
+}
 </style>
 </head>
 <body>
@@ -667,7 +712,7 @@ const Store={
     try{localStorage.setItem(LKEY,JSON.stringify({workouts:S.workouts,content:S.content,food:S.food,measure:S.measure}))}catch(e){}
   },
   async save(kind,obj){DATAV++;
-    obj=clone(obj);const id=obj.id;delete obj.id;
+    obj=clone(obj);obj.u=Date.now();const id=obj.id;delete obj.id;
     if(S.mode==="cloud"){
       try{await this.base.collection(kind).doc(id).set(obj)}
       catch(e){
@@ -676,17 +721,17 @@ const Store={
       }
     }else{
       obj.id=id;const arr=S[kind];const i=arr.findIndex(x=>x.id===id);
-      if(i>=0)arr[i]=obj;else arr.push(obj);this.persist();render();
+      if(i>=0)arr[i]=obj;else arr.push(obj);this.persist();render();scheduleSync();
     }
   },
   async remove(kind,id){DATAV++;
     if(S.mode==="cloud"){await this.base.collection(kind).doc(id).delete()}
-    else{S[kind]=S[kind].filter(x=>x.id!==id);this.persist();render()}
+    else{S[kind]=S[kind].filter(x=>x.id!==id);markDel(kind,id);this.persist();render();scheduleSync()}
   }
 };
 
 /* ---------- backup ---------- */
-const GEAR='<button class="iconbtn" data-act="settings" aria-label="Instellingen en backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3.5"/></svg></button>';
+const GEAR='<button class="iconbtn gear" data-act="settings" aria-label="Instellingen en backup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5"/><circle cx="12" cy="12" r="3.5"/></svg></button>';
 const BKEY="gym_last_backup";
 const getLastBackup=()=>{try{return +localStorage.getItem(BKEY)||0}catch(e){return 0}};
 const isStandalone=()=>window.navigator.standalone===true||(window.matchMedia&&matchMedia("(display-mode: standalone)").matches);
@@ -724,7 +769,7 @@ function importBackup(file){
         const i=S[kind].findIndex(x=>x.id===item.id);
         if(i>=0)S[kind][i]=item;else{S[kind].push(item);added++}
       }
-      Store.persist();render();if(S.sheet==="settings")renderSheet();
+      Store.persist();DATAV++;scheduleSync();render();if(S.sheet==="settings")renderSheet();
       toast("Backup teruggezet ("+added+" nieuw)");
     }catch(e){toast("Dit is geen geldig backup-bestand")}
   };
@@ -733,7 +778,9 @@ function importBackup(file){
 function sheetSettings(){
   const lb=getLastBackup();
   let h='<div class="sheet-head"><span style="width:60px"></span><h2>Instellingen</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">';
-  h+='<div class="section-label" style="margin-top:0">Backup</div>';
+  h+=syncSection();
+  h=h.replace('<div class="section-label">Synchroniseren</div>','<div class="section-label" style="margin-top:0">Synchroniseren</div>');
+  h+='<div class="section-label">Backup</div>';
   h+='<div class="card" style="cursor:default"><div class="small muted" style="margin-bottom:12px">Je gegevens staan alleen op deze telefoon. Maak regelmatig een backup en bewaar die in Bestanden of iCloud Drive. Bij een nieuwe telefoon of als je de app verwijdert zet je hem zo terug.</div>'+
     '<div class="small" style="margin-bottom:12px">Laatste backup: <b>'+(lb?esc(new Date(lb).toLocaleDateString("nl-NL",{day:"numeric",month:"long",year:"numeric"})):"nog nooit")+'</b><br><span class="muted">'+S.workouts.length+' trainingen · '+S.content.length+' content-items</span></div>'+
     '<button class="btn primary block" data-act="export">💾 Backup maken</button>'+
@@ -754,7 +801,7 @@ function sheetSettings(){
 /* ---------- welcome ---------- */
 const NKEY="gym_name",WKEY="gym_welcome_off",QKEY="gym_quotes";
 const lsGet=k=>{try{return localStorage.getItem(k)||""}catch(e){return ""}};
-const lsSet=(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}};
+const lsSet=(k,v)=>{try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}try{markKV(k)}catch(e){}};
 const QUOTES=[
 "Consistentie wint het altijd van motivatie.",
 "Je hoeft niet perfect te zijn. Je hoeft alleen maar te komen opdagen.",
@@ -995,7 +1042,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.0.1";
+const APP_VERSION="2.1.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1482,6 +1529,99 @@ async function scanMeasure(file){
   }catch(e){if(!S.draft||S.draft.id!==id)return;Object.assign(S.draft,{scanning:false,scanErr:true,scanMsg:"Lezen mislukt: "+(e.message||"geen internet")+". Vul de waarden zelf in."});renderSheet()}
 }
 
+/* ---------- synchronisatie via GitHub (privé-gist) ---------- */
+const SYNC_KEYS=["gym_name","gym_welcome_off","gym_wtpl","gym_ex_goals","gym_body_goal","gym_macro_tpl","gym_food_goals","gym_water_log","gym_barcodes"];
+const SKT="gym_sync_token",SKG="gym_sync_gist",SKL="gym_sync_login",SKD="gym_deleted",SKU="gym_kvu",SKLAST="gym_sync_last";
+const KINDS=["workouts","content","food","measure"];
+const SFILE="gym-data.json",SDESC="Gym app sync (privé, niet bewerken)";
+const SY={state:"off",msg:"",busy:false,again:false,t:null};
+const jget=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||"null")??d}catch(e){return d}};
+const jset=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const syncOn=()=>!!(lsGet(SKT)&&lsGet(SKG));
+function markKV(k){if(!SYNC_KEYS.includes(k))return;const u=jget(SKU,{});u[k]=Date.now();jset(SKU,u);scheduleSync()}
+function markDel(kind,id){const d=jget(SKD,{});(d[kind]=d[kind]||{})[id]=Date.now();jset(SKD,d)}
+const itemT=x=>num(x&&(x.u||x.createdAt))||0;
+function setSyncState(st,msg){SY.state=st;SY.msg=msg||"";document.body.dataset.sync=syncOn()?st:"off";if(S.sheet==="settings"){const el=$("#syncStat");if(el)el.innerHTML=syncStatHTML()}}
+function syncStatHTML(){const t=num(lsGet(SKLAST));
+  return SY.state==="busy"?'<i class="spin"></i> Bezig met synchroniseren…':SY.state==="err"?'⚠️ '+esc(SY.msg||"Synchroniseren mislukt"):
+    '✓ Gesynchroniseerd'+(t?' · '+new Date(t).toLocaleString("nl-NL",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}):'')}
+function localPayload(){
+  const kv={},kvu=jget(SKU,{});
+  for(const k of SYNC_KEYS){let v=null;try{v=localStorage.getItem(k)}catch(e){}kv[k]={v,u:kvu[k]||0}}
+  const data={};for(const k of KINDS)data[k]=S[k];
+  return {v:1,data,del:jget(SKD,{}),kv};
+}
+function mergeRemote(r){
+  let changed=false;if(!r||!r.data)return false;
+  const del=jget(SKD,{});
+  for(const kind of KINDS){const rd=r.del&&r.del[kind]||{};del[kind]=del[kind]||{};for(const id in rd)if(!(del[kind][id]>=rd[id])){del[kind][id]=rd[id]}}
+  jset(SKD,del);
+  for(const kind of KINDS){
+    const m=new Map(S[kind].map(x=>[x.id,x]));
+    for(const x of (r.data[kind]||[])){if(!x||!x.id)continue;const l=m.get(x.id);if(!l||itemT(x)>itemT(l)){m.set(x.id,x);changed=true}}
+    const dk=del[kind]||{};const out=[];for(const x of m.values()){if(dk[x.id]&&dk[x.id]>=itemT(x)){if(S[kind].some(y=>y.id===x.id))changed=true;continue}out.push(x)}
+    S[kind]=out;
+  }
+  const kvu=jget(SKU,{});
+  for(const k in (r.kv||{})){if(!SYNC_KEYS.includes(k))continue;const e=r.kv[k];if(e&&e.u>(kvu[k]||0)){try{e.v==null?localStorage.removeItem(k):localStorage.setItem(k,e.v)}catch(er){}kvu[k]=e.u;changed=true}}
+  jset(SKU,kvu);
+  if(changed){Store.persist();DATAV++;try{waterLog.cache=null}catch(e){}}
+  return changed;
+}
+async function gh(path,opt){
+  opt=opt||{};const r=await fetch("https://api.github.com"+path,Object.assign({},opt,{cache:"no-store",headers:Object.assign({"Authorization":"Bearer "+lsGet(SKT),"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"},opt.body?{"Content-Type":"application/json"}:{})}));
+  if(r.status===401)throw new Error("Sleutel ongeldig of verlopen");
+  if(r.status===404)throw new Error("Sync-bestand niet gevonden");
+  if(!r.ok)throw new Error("GitHub-fout "+r.status);
+  return r.status===204?null:r.json();
+}
+async function readGist(){
+  const g=await gh("/gists/"+lsGet(SKG));const f=g.files&&g.files[SFILE];if(!f)return null;
+  let txt=f.content;if(f.truncated){const r=await fetch(f.raw_url,{cache:"no-store"});txt=await r.text()}
+  try{return JSON.parse(txt)}catch(e){return null}
+}
+async function syncNow(manual){
+  if(!syncOn())return;
+  if(SY.busy){SY.again=true;return}
+  if(!navigator.onLine){setSyncState("err","Geen internet, synct later vanzelf");return}
+  SY.busy=true;setSyncState("busy");
+  try{
+    const remote=await readGist();
+    const changed=mergeRemote(remote);
+    if(changed&&!S.sheet)render();
+    const mine=JSON.stringify(localPayload()),theirs=remote?JSON.stringify({v:remote.v,data:remote.data,del:remote.del,kv:remote.kv}):"";
+    if(mine!==theirs)await gh("/gists/"+lsGet(SKG),{method:"PATCH",body:JSON.stringify({files:{[SFILE]:{content:mine}}})});
+    lsSet(SKLAST,String(Date.now()));setSyncState("ok");if(manual)toast(changed?"Gesynchroniseerd, nieuwe gegevens binnengehaald ✓":"Alles is gesynchroniseerd ✓");
+  }catch(e){setSyncState("err",e.message||"mislukt");if(manual)toast(e.message||"Synchroniseren mislukt")}
+  finally{SY.busy=false;if(SY.again){SY.again=false;scheduleSync(800)}}
+}
+function scheduleSync(ms){if(!syncOn())return;clearTimeout(SY.t);SY.t=setTimeout(()=>syncNow(false),ms==null?2500:ms)}
+async function connectSync(tok){
+  tok=(tok||"").trim();if(!tok){toast("Plak eerst je sleutel");return}
+  try{localStorage.setItem(SKT,tok)}catch(e){}
+  setSyncState("busy");if(S.sheet==="settings")renderSheet();
+  try{
+    const u=await gh("/user");lsSet(SKL,u.login||"");
+    let gid=null;
+    for(let page=1;page<=5&&!gid;page++){const l=await gh("/gists?per_page=100&page="+page);if(!l.length)break;const g=l.find(x=>x.description===SDESC&&x.files&&x.files[SFILE]);if(g)gid=g.id}
+    if(!gid){const g=await gh("/gists",{method:"POST",body:JSON.stringify({description:SDESC,public:false,files:{[SFILE]:{content:JSON.stringify(localPayload())}}})});gid=g.id}
+    lsSet(SKG,gid);
+    await syncNow(false);render();if(S.sheet==="settings")renderSheet();
+    toast("Gekoppeld met @"+(u.login||"GitHub")+" ✓");
+  }catch(e){lsSet(SKT,"");lsSet(SKG,"");setSyncState("off");if(S.sheet==="settings")renderSheet();toast(e.message==="Sleutel ongeldig of verlopen"?"Deze sleutel werkt niet. Kopieer hem opnieuw.":"Koppelen mislukt: "+e.message)}
+}
+function disconnectSync(){[SKT,SKG,SKL,SKLAST].forEach(k=>lsSet(k,""));setSyncState("off");renderSheet();toast("Ontkoppeld. Je gegevens blijven op dit apparaat.")}
+function syncSection(){
+  if(!syncOn())return '<div class="section-label">Synchroniseren</div><div class="card sync" style="cursor:default"><b>📱💻 Telefoon en laptop gelijk houden</b>'+
+    '<p class="small muted">Je gegevens worden bewaard in een privé-bestand in je eigen GitHub-account. Koppel op elk apparaat met dezelfde sleutel.</p>'+
+    '<ol class="small sync-steps"><li>Open <a href="https://github.com/settings/tokens/new?scopes=gist&description=Gym%20app%20sync" target="_blank" rel="noopener">deze pagina op GitHub</a> (log in als dat nodig is)</li><li>Kies bij <b>Expiration</b> voor <b>No expiration</b>. Alleen <b>gist</b> is aangevinkt, laat de rest zo.</li><li>Tik onderaan op <b>Generate token</b> en kopieer de code (begint met <b>ghp_</b>)</li><li>Plak hem hieronder</li></ol>'+
+    '<div class="field"><input id="syncTok" type="password" autocomplete="off" placeholder="ghp_…"></div><button class="btn primary block" data-act="syncConnect">🔗 Koppelen</button></div>';
+  return '<div class="section-label">Synchroniseren</div><div class="card sync" style="cursor:default"><div class="row between"><b>✓ Gekoppeld met @'+esc(lsGet(SKL)||"GitHub")+'</b></div>'+
+    '<div class="small muted" id="syncStat" style="margin:6px 0 12px">'+syncStatHTML()+'</div>'+
+    '<div class="grid2"><button class="btn primary" data-act="syncNow">↻ Nu synchroniseren</button><button class="btn" data-act="syncOff">Ontkoppelen</button></div>'+
+    '<p class="small muted" style="margin:10px 0 0">Koppel je laptop met dezelfde sleutel. Bewaar hem ergens veilig, bijvoorbeeld in je wachtwoordmanager.</p></div>';
+}
+
 /* ---------- derived ---------- */
 const sortedWorkouts=()=>S.workouts.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
 function exerciseIndex(){
@@ -1533,7 +1673,7 @@ function render(){
   else if(S.err)banner='<div class="banner">'+esc(S.err)+'</div>';
   else if(S.slow)banner='<div class="banner">Je gegevens zijn nog niet bereikbaar. Wat je ziet is misschien niet actueel.</div>';
   else if(needsBackup())banner='<button class="banner" data-act="settings" style="width:100%;text-align:left">💾 Je laatste backup is meer dan een week oud. Tik hier om een backup te maken.</button>';
-  else if(!isStandalone()&&!S.hideInstall)banner='<div class="banner">📲 Tik in Safari op <b>Deel</b> → <b>Zet op beginscherm</b> en open de app daarna altijd via dat icoon.</div>';
+  else if(!isStandalone()&&!S.hideInstall&&window.innerWidth<900&&/iPhone|iPad|iPod/.test(navigator.userAgent))banner='<div class="banner">📲 Tik in Safari op <b>Deel</b> → <b>Zet op beginscherm</b> en open de app daarna altijd via dat icoon.</div>';
   let html="";
   try{
     if(S.mode==="loading")html='<div class="empty">Laden…</div>';
@@ -1992,6 +2132,9 @@ document.addEventListener("click",async ev=>{
     case "settings":openSheet("settings",{});break;
     case "export":exportBackup();break;
     case "enter":hideWelcome();break;
+    case "syncConnect":connectSync(($("#syncTok")||{}).value);break;
+    case "syncNow":syncNow(true);break;
+    case "syncOff":if(!S.confirmDel){S.confirmDel=true;a.textContent="Zeker? Tik nogmaals";break}S.confirmDel=false;disconnectSync();break;
     case "histMore":S.histN=(S.histN||20)+30;render();break;
     case "fxOn":lsSet("gym_fx","1");document.documentElement.classList.add("fx");renderSheet();break;
     case "fxOff":lsSet("gym_fx","");document.documentElement.classList.remove("fx");renderSheet();break;
@@ -2162,7 +2305,10 @@ document.addEventListener("touchmove",ev=>{if(ev.touches&&ev.touches.length>1)ev
   document.addEventListener("focusout",ev=>{if(ev.target.matches("input,textarea,select"))setTimeout(()=>{if(!document.activeElement||!document.activeElement.matches("input,textarea,select"))restore()},140)});
   document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")setTimeout(restore,200)});
 })();
-document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkUpdate(false)});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){checkUpdate(false);scheduleSync(300)}else if(syncOn()&&SY.t){clearTimeout(SY.t);syncNow(false)}});
+window.addEventListener("online",()=>scheduleSync(500));
+setInterval(()=>{if(document.visibilityState==="visible"&&!S.sheet)syncNow(false)},90000);
+document.body.dataset.sync=syncOn()?"ok":"off";scheduleSync(600);
 })();
 </script>
 </body>
