@@ -1042,7 +1042,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.1.0";
+const APP_VERSION="2.1.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1421,7 +1421,7 @@ function seriesFor(k){const pts=[];for(const m of S.measure.slice().sort((a,b)=>
   if(v!=null&&v!=="")pts.push({d:m.date,v:num(v)})}return pts}
 function progressCard(){
   if(!S.measMetric||!PMAIN.some(x=>x[0]===S.measMetric)){const f=PMAIN.find(x=>seriesFor(x[0]).length);S.measMetric=f?f[0]:"weight"}
-  const [k,label,good]=PMAIN.find(x=>x[0]===S.measMetric),pts=seriesFor(k),u=MF[k][2],bg=k==="weight"?bodyGoal():0;
+  const [k,label,good]=PMAIN.find(x=>x[0]===S.measMetric),pts=seriesFor(k),u=MF[k][2],bg=mGoal(k);
   let h='<div class="section-label">Vooruitgang</div><div class="card prog" style="cursor:default"><div class="pchips">'+PMAIN.map(([kk,l])=>{const n=seriesFor(kk).length;
     return '<button class="pchip '+(kk===k?"on":"")+(n?"":" none")+'" data-act="measMetric" data-k="'+kk+'">'+l+'</button>'}).join("")+'</div>';
   if(!pts.length)return h+'<div class="empty" style="padding:26px 10px">Nog geen '+esc(label.toLowerCase())+' gemeten.</div></div>';
@@ -1431,9 +1431,10 @@ function progressCard(){
   h+='<div class="pstats"><div><span>Begin · '+esc(fmtDate(a.d,{day:"numeric",month:"short"}))+'</span><b>'+f(a.v)+(u?' '+u:'')+'</b></div>'+
      '<div class="parr">→</div><div><span>Nu · '+esc(fmtDate(b.d,{day:"numeric",month:"short"}))+'</span><b>'+f(b.v)+(u?' '+u:'')+'</b></div>'+
      '<div class="pdiff '+cls+'">'+(diff>0?"+":diff<0?"−":"±")+f(Math.abs(diff))+(u?' '+u:'')+'<small>'+(diff>0?"+":diff<0?"−":"")+fmtKg(Math.abs(Math.round(pct*10)/10))+'%</small></div></div>';
-  if(k==="weight"){const cur=pts[pts.length-1].v,left=bg?bg-cur:0;
-    h+='<div class="goalrow"><span>🎯 Streefgewicht</span><input data-bodygoal inputmode="decimal" placeholder="bv. 75" value="'+(bg||"")+'"><span class="muted">kg</span>'+
-      (bg?'<b class="'+(Math.abs(left)<.25?"done":"")+'">'+(Math.abs(left)<.25?"✓ Behaald!":"nog "+fmtKg(Math.abs(left))+" kg "+(left>0?"erbij":"eraf"))+'</b>':'')+'</div>'}
+  {const cur=pts[pts.length-1].v,left=bg?bg-cur:0,unit=k==="bmi"?"":u,ph={weight:"bv. 75",fat:"bv. 12",fatmass:"bv. 9",smm:"bv. 36",bmi:"bv. 22"}[k];
+    const dir=k==="fat"||k==="fatmass"?-1:k==="smm"?1:0,reached=bg&&(dir<0?cur<=bg+.05:dir>0?cur>=bg-.05:Math.abs(left)<(k==="bmi"?.1:.25));
+    h+='<div class="goalrow"><span>🎯 '+(k==="weight"?"Streefgewicht":"Doel "+esc(label))+'</span><input data-mgoal="'+k+'" inputmode="decimal" placeholder="'+ph+'" value="'+(bg||"")+'"><span class="muted">'+(unit||"&nbsp;")+'</span>'+
+      (bg?'<b class="'+(reached?"done":"")+'">'+(reached?"✓ Behaald!":"nog "+(k==="bmi"?fmtKg(Math.round(Math.abs(left)*10)/10):fmtKg(Math.abs(left)))+(unit?" "+unit:"")+" "+(left>0?"erbij":"eraf"))+'</b>':'')+'</div>'}
   h+=pts.length>1||bg?'<div class="pchart">'+chartSvg(pts,bg)+'</div>':'<div class="small muted" style="margin-top:10px">Na je volgende meting zie je hier de lijn van begin tot nu.</div>';
   h+='<div class="small muted" style="margin-top:6px">'+pts.length+(pts.length===1?' meting':' metingen')+(pts.length>1?' over '+Math.max(1,Math.round((toD(b.d)-toD(a.d))/864e5))+' dagen':'')+(k==="fatmass"?' · vetmassa wordt berekend uit gewicht × vet % als hij niet op je scan staat':'')+'</div>';
   return h+'</div>';
@@ -1530,7 +1531,7 @@ async function scanMeasure(file){
 }
 
 /* ---------- synchronisatie via GitHub (privé-gist) ---------- */
-const SYNC_KEYS=["gym_name","gym_welcome_off","gym_wtpl","gym_ex_goals","gym_body_goal","gym_macro_tpl","gym_food_goals","gym_water_log","gym_barcodes"];
+const SYNC_KEYS=["gym_name","gym_welcome_off","gym_wtpl","gym_ex_goals","gym_body_goal","gym_meas_goals","gym_macro_tpl","gym_food_goals","gym_water_log","gym_barcodes"];
 const SKT="gym_sync_token",SKG="gym_sync_gist",SKL="gym_sync_login",SKD="gym_deleted",SKU="gym_kvu",SKLAST="gym_sync_last";
 const KINDS=["workouts","content","food","measure"];
 const SFILE="gym-data.json",SDESC="Gym app sync (privé, niet bewerken)";
@@ -1770,6 +1771,9 @@ const exGoals=()=>{try{return JSON.parse(lsGet(EGKEY)||"{}")||{}}catch(e){return
 const exGoal=n=>num(exGoals()[norm(n)])||0;
 function setExGoal(n,v){const g=exGoals(),k=norm(n);v=num(v);if(v>0)g[k]=Math.round(v*100)/100;else delete g[k];lsSet(EGKEY,JSON.stringify(g))}
 const bodyGoal=()=>num(lsGet(BGKEY))||0;
+const MGKEY="gym_meas_goals";
+function mGoal(k){if(k==="weight")return bodyGoal();try{return num((JSON.parse(lsGet(MGKEY)||"{}")||{})[k])||0}catch(e){return 0}}
+function setMGoal(k,v){v=num(v);if(k==="weight"){lsSet(BGKEY,v>0?String(v):"");return}let g={};try{g=JSON.parse(lsGet(MGKEY)||"{}")||{}}catch(e){}if(v>0)g[k]=v;else delete g[k];lsSet(MGKEY,JSON.stringify(g))}
 function exStats(ex){let max=0,best=0;for(const s of ex.sets||[]){const kg=num(s.kg),r=num(s.reps);if(kg>max)max=kg;const e=e1rm(kg,r)||(kg?0:r/1000);if(e>best)best=e}return {max,best}}
 function allTimeBefore(name,excludeId,date){let max=0,best=0;const k=norm(name);
   for(const w of S.workouts){if(w.id===excludeId||w.date>date)continue;for(const ex of w.exercises||[])if(norm(ex.name)===k){const st=exStats(ex);if(st.max>max)max=st.max;if(st.best>best)best=st.best}}
@@ -2220,7 +2224,7 @@ document.addEventListener("input",ev=>{
   const tt=ev.target;
   if(tt.dataset.mv&&S.draft&&S.draft.v){S.draft.v[tt.dataset.mv]=tt.value;if(S.draft.auto)delete S.draft.auto[tt.dataset.mv];return}
   if(tt.dataset.exgoal!=null){setExGoal(tt.dataset.exgoal,tt.value);clearTimeout(window.__gT);window.__gT=setTimeout(()=>{if(S.tab==="prog"&&!S.sheet){const y=window.scrollY;render();window.scrollTo(0,y);const el=document.querySelector('[data-exgoal]');if(el){el.focus();const v=el.value;el.value="";el.value=v}}},700);return}
-  if(tt.dataset.bodygoal!=null){const v=num(tt.value);lsSet(BGKEY,v>0?String(v):"");clearTimeout(window.__gT);window.__gT=setTimeout(()=>{const y=window.scrollY;render();window.scrollTo(0,y)},900);return}
+  if(tt.dataset.mgoal!=null){setMGoal(tt.dataset.mgoal,tt.value);clearTimeout(window.__gT);window.__gT=setTimeout(()=>{const y=window.scrollY;render();window.scrollTo(0,y)},900);return}
   if(tt.id==="foodQ"&&S.draft){S.draft.q=tt.value;const r=$("#foodResults");if(r)r.innerHTML=foodResults(tt.value);return}
   if(tt.id==="foodG"&&S.draft){S.draft.grams=tt.value;const fc=$("#foodCalc");if(fc)fc.innerHTML=calcBox(calc(S.draft.item.per100,num(tt.value)));return}
   if(tt.dataset.tpl){tplUpdate(tt.dataset.tpl,tt.value);return}
