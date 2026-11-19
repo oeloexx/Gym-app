@@ -1303,7 +1303,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.4.0";
+const APP_VERSION="2.4.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1962,7 +1962,10 @@ function stopRun(){const r=getRun();if(!r)return;clearInterval(RUNT);setRun(null
   const end=Date.now(),ws=S.workouts.filter(w=>w.sessionId===r.id);
   openSheet("sessEnd",{id:r.id,start:r.start,end,dur:Math.round((end-r.start)/1000),date:iso(new Date(r.start)),workoutIds:ws.map(w=>w.id),kcal:"",hrAvg:"",hrMax:"",note:"",isNew:true})}
 function healthURL(d){const mins=Math.max(1,Math.ceil((Date.now()-d.start)/60000)+1);return "shortcuts://run-shortcut?name="+encodeURIComponent("Gym Health")+"&input=text&text="+mins}
-function parseHealth(t){const m=String(t||"").replace(/,/g,".").match(/GYMHEALTH\|([\d.]+)[^|]*\|([\d.]*)[^|]*\|([\d.]*)/);if(!m)return null;return {kcal:Math.round(num(m[1])),hrAvg:Math.round(num(m[2]))||"",hrMax:Math.round(num(m[3]))||""}}
+function parseHealth(t){t=String(t||"");const i=t.toUpperCase().indexOf("GYMHEALTH");if(i<0)return null;
+  const toN=x=>{x=String(x||"").replace(/[^\d.,]/g,"");if(!x)return NaN;if(x.includes(",")&&x.includes("."))x=x.lastIndexOf(",")>x.lastIndexOf(".")?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"");else x=x.replace(",",".");return parseFloat(x)};
+  const p=t.slice(i+9).split("|").map(x=>x.trim());while(p.length&&!p[0])p.shift();const k=toN(p[0]),a=toN(p[1]),m=toN(p[2]);
+  if(isNaN(k)&&isNaN(a))return null;return {kcal:isNaN(k)?"":Math.round(k),hrAvg:isNaN(a)?"":Math.round(a),hrMax:isNaN(m)?"":Math.round(m)}}
 function viewSess(){
   const r=getRun();
   let h='<header class="top"><div><div class="hello">Gymtimer & Apple Health</div><h1>Sessie</h1></div>'+GEAR+'</header>';
