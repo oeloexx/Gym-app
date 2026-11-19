@@ -1978,7 +1978,8 @@ function viewSess(){
   }
   const ss=S.sessions.slice().sort((a,b)=>b.start-a.start),wk=ss.filter(x=>x.date>=weekStart(new Date()));
   const sum=(arr,k)=>arr.reduce((a,x)=>a+num(x[k]),0);
-  h+='<div class="stats"><div class="stat"><b>'+durTxt(sum(wk,"dur"))+'</b><span>deze week</span></div><div class="stat"><b>'+(ss.length?durTxt(sum(ss,"dur")/ss.length):"–")+'</b><span>gem. sessie</span></div><div class="stat"><b>'+(sum(wk,"kcal")?Math.round(sum(wk,"kcal")):"–")+'</b><span>kcal deze week</span></div></div>';
+  const dS=x=>{const h=Math.floor(x/3600),m=Math.round(x%3600/60);return h?h+"u "+pad(m)+"m":m+" min"};
+  h+='<div class="stats"><div class="stat"><b>'+dS(sum(wk,"dur"))+'</b><span>deze week</span></div><div class="stat"><b>'+(ss.length?dS(sum(ss,"dur")/ss.length):"–")+'</b><span>gem. sessie</span></div><div class="stat"><b>'+(sum(wk,"kcal")?Math.round(sum(wk,"kcal")):"–")+'</b><span>kcal deze week</span></div></div>';
   h+='<button class="card hlth" data-act="healthHelp"><b>❤️ Apple Health koppelen</b><span>Eénmalig een Opdracht maken, dan komen kcal en hartslag na elke sessie binnen ›</span></button>';
   if(ss.length){h+='<div class="section-label">Geschiedenis</div>';
     for(const x of ss.slice(0,30)){const ws=S.workouts.filter(w=>(x.workoutIds||[]).includes(w.id));
