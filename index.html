@@ -239,6 +239,22 @@ body[data-sync="err"] .gear::after{background:#ff5c5c}
 .sync p{margin:6px 0 10px;line-height:1.5}
 .sync-steps{margin:0 0 12px;padding-left:20px;line-height:1.6;color:#cfd6df}.sync-steps a{color:#22d3ee}
 #syncStat{display:flex;align-items:center;gap:8px}
+/* spiergroepen */
+.gdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.gdist .gbar{display:grid;grid-template-columns:96px 1fr 28px;align-items:center;gap:8px;margin-top:8px;font-size:13px}
+.gdist .gbar span{display:flex;align-items:center;font-weight:600}.gdist .gbar span i{width:8px;height:8px;border-radius:50%;margin-right:7px}
+.gdist .gbar em{height:8px;border-radius:8px;background:rgba(255,255,255,.06);overflow:hidden}.gdist .gbar em b{display:block;height:100%;border-radius:8px}
+.gdist .gbar strong{text-align:right;font-family:Archivo}
+.pgrid{display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:6px}
+.pcard{display:flex;align-items:center;gap:10px;padding:8px;border-radius:16px;background:var(--card);border:1px solid rgba(255,255,255,.06);text-align:left;width:100%}
+.pcard.on{border-color:#22d3ee;background:linear-gradient(160deg,rgba(34,211,238,.16),var(--card) 70%)}
+.pc-th{position:relative;display:block;overflow:hidden;width:52px;height:44px;border-radius:11px;background:#e9e6e1;flex:none}
+.pc-th img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.pc-th img.alt{display:none}.pc-th.noimg svg{width:22px;height:22px}
+.pc-b{flex:1;min-width:0}.pc-b b{display:block;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pc-b span{font-size:12px;color:var(--muted)}
+.tr{font-style:normal;flex:none;width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px}
+.tr.up{background:rgba(34,211,238,.18);color:#22d3ee}.tr.pr{background:rgba(255,255,255,.9)}.tr.dn{background:rgba(255,92,92,.14);color:#ff8a8a}.tr.eq{background:rgba(255,255,255,.06);color:var(--muted)}
+.pdet{font-size:15px;color:#fff;text-transform:none;letter-spacing:0;font-family:Archivo;margin-top:22px;scroll-margin-top:20px}
+@media (min-width:900px){.pgrid{grid-template-columns:1fr}}
 /* prestaties */
 .card.wcard,.card.mrowc,.meal,.hist div,.pk-card{content-visibility:auto;contain-intrinsic-size:auto 86px}
 /* oefeningen */
@@ -1044,7 +1060,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.2.1";
+const APP_VERSION="2.3.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1829,12 +1845,56 @@ function refreshSetBadges(i){
   const tag=rows.querySelector(".exprog");if(tag){tag.innerHTML=prs?'🏆 Nieuw record!':ups?'↑ Beter dan vorige keer ('+ups+(ups===1?' set':' sets')+')':'';tag.style.display=prs||ups?"":"none"}
 }
 
+/* ---------- spiergroepen ---------- */
+const GROUPS=[["Borst","#22d3ee"],["Rug","#818cf8"],["Schouders","#f472b6"],["Benen","#fbbf24"],["Armen","#34d399"],["Buik","#fb923c"],["Overig","#94a3b8"]];
+const GCOL=Object.fromEntries(GROUPS);
+const GKW=[["Buik",/crunch|plank|sit-?up|leg raise|ab roller|russian twist|\babs?\b|buik/],["Benen",/squat|leg|lunge|calf|kuit|hip thrust|glute|bil|hamstring|rdl|romanian|deadlift|adductor|abductor|step-?up|been/],
+  ["Armen",/curl|tricep|bicep|skull|pushdown|hammer|kickback|dip.*tricep|onderarm|forearm|arm/],["Borst",/bench|chest|borst|fly|flye|pec|dip|push-?up|crossover/],
+  ["Rug",/row|pulldown|pull-?up|chin-?up|\blat\b|lats|rug|back|shrug|pullover|t-?bar/],["Schouders",/press|lateral|delt|shoulder|schouder|face pull|raise|arnold|upright/]];
+function exGroup(name,exId){const e=(exId&&EXBY[exId])||EXNAME[norm(name)]||EXLOOSE[loose(name)];if(e&&e.group&&GCOL[e.group])return e.group;const n=norm(name);for(const [g,re] of GKW)if(re.test(n))return g;return "Overig"}
+function exOverview(){
+  const m=new Map();
+  for(const w of S.workouts)for(const ex of w.exercises||[]){const k=norm(ex.name);if(!k)continue;const sets=(ex.sets||[]).filter(s=>num(s.kg)||num(s.reps));if(!sets.length)continue;
+    if(!m.has(k))m.set(k,{name:ex.name.trim(),exId:ex.exId,sess:[]});const o=m.get(k);if(!o.exId&&ex.exId)o.exId=ex.exId;
+    let best=0,bs=null,max=0;for(const s of sets){const e1=e1rm(num(s.kg),num(s.reps))||num(s.reps)/1000;if(e1>best){best=e1;bs=s}if(num(s.kg)>max)max=num(s.kg)}o.sess.push({date:w.date,best,bs,max})}
+  const out=[];for(const o of m.values()){o.sess.sort((a,b)=>a.date.localeCompare(b.date));const l=o.sess[o.sess.length-1],p=o.sess[o.sess.length-2];
+    const allPrev=o.sess.slice(0,-1).reduce((a,s)=>Math.max(a,s.best),0);
+    o.group=exGroup(o.name,o.exId);o.e=(o.exId&&EXBY[o.exId])||EXNAME[norm(o.name)]||EXLOOSE[loose(o.name)]||null;o.last=l;o.trend=!p?0:l.best>p.best+.01?1:l.best<p.best-.01?-1:0;o.pr=o.sess.length>1&&l.best>allPrev+.01;out.push(o)}
+  return out.sort((a,b)=>b.last.date.localeCompare(a.last.date)||b.sess.length-a.sess.length);
+}
+function groupWeek(){
+  const from=iso(new Date(Date.now()-6*864e5)),t=today(),c={};
+  for(const w of S.workouts){if(!w.date||w.date<from||w.date>t)continue;for(const ex of w.exercises||[]){const n=(ex.sets||[]).filter(s=>num(s.kg)||num(s.reps)).length;if(!n)continue;const g=exGroup(ex.name,ex.exId);c[g]=(c[g]||0)+n}}
+  return c;
+}
+
 function viewProg(){
-  let h='<header class="top"><div><h1>Progressie</h1><div class="sub">Per oefening, over tijd</div></div>'+GEAR+'</header>';
-  const idx=exerciseIndex();
-  if(!idx.length)return h+'<div class="empty"><div class="big">📈</div>Log eerst een paar trainingen, dan zie je hier je progressie per oefening.</div>';
-  if(!S.progEx||!idx.some(e=>norm(e.name)===norm(S.progEx)))S.progEx=idx[0].name;
-  h+='<div class="field"><select id="progSel">'+idx.map(e=>'<option value="'+esc(e.name)+'"'+(norm(e.name)===norm(S.progEx)?" selected":"")+'>'+esc(e.name)+' ('+e.count+'×)</option>').join("")+'</select></div>';
+  let h='<header class="top"><div><h1>Progressie</h1><div class="sub">Per spiergroep en oefening</div></div>'+GEAR+'</header>';
+  const all=exOverview();
+  if(!all.length)return h+'<div class="empty"><div class="big">📈</div>Log eerst een paar trainingen, dan zie je hier je progressie per spiergroep.</div>';
+  // verdeling over spiergroepen (laatste 7 dagen)
+  const gw=groupWeek(),gt=Object.values(gw).reduce((a,b)=>a+b,0),gmax=Math.max(1,...Object.values(gw));
+  h+='<div class="card gdist" style="cursor:default"><div class="row between"><span class="hero-label">Verdeling laatste 7 dagen</span><span class="small muted">'+gt+' sets</span></div>'+
+    (gt?GROUPS.filter(([g])=>gw[g]).map(([g,c])=>'<div class="gbar"><span><i style="background:'+c+'"></i>'+g+'</span><em><b style="width:'+(gw[g]/gmax*100).toFixed(1)+'%;background:'+c+'"></b></em><strong>'+gw[g]+'</strong></div>').join("")+
+      (()=>{const miss=GROUPS.filter(([g])=>g!=="Overig"&&g!=="Buik"&&!gw[g]).map(x=>x[0]);return miss.length?'<div class="small muted" style="margin-top:8px">Nog niet getraind deze week: <b style="color:#fff">'+miss.join(", ")+'</b></div>':'<div class="small" style="margin-top:8px;color:#7fe7fb">✓ Alle grote spiergroepen getraind</div>'})()
+     :'<div class="small muted" style="margin-top:8px">Geen trainingen in de afgelopen 7 dagen.</div>')+'</div>';
+  // spiergroep-knoppen
+  const gc={};for(const o of all)gc[o.group]=(gc[o.group]||0)+1;
+  if(S.progGroup&&S.progGroup!=="Alles"&&!gc[S.progGroup])S.progGroup="Alles";
+  const G=S.progGroup||"Alles";
+  h+='<div class="chips">'+[["Alles",all.length],...GROUPS.filter(([g])=>gc[g]).map(([g])=>[g,gc[g]])].map(([g,n])=>'<button class="chip '+(G===g?"on":"")+'" data-act="progGroup" data-v="'+g+'">'+(g!=="Alles"?'<i class="gdot" style="background:'+GCOL[g]+'"></i>':'')+g+'<span class="n">'+n+'</span></button>').join("")+'</div>';
+  const list=all.filter(o=>G==="Alles"||o.group===G);
+  if(!S.progEx||!list.some(o=>norm(o.name)===norm(S.progEx)))S.progEx=list[0].name;
+  // oefeningen per spiergroep
+  const groupsShown=G==="Alles"?GROUPS.map(x=>x[0]).filter(g=>gc[g]):[G];
+  for(const g of groupsShown){
+    const items=list.filter(o=>o.group===g);if(!items.length)continue;
+    h+='<div class="section-label"><i class="gdot" style="background:'+GCOL[g]+'"></i>'+g+'</div><div class="pgrid">'+items.map(o=>{const l=o.last,bs=l.bs;
+      return '<button class="pcard'+(norm(o.name)===norm(S.progEx)?" on":"")+'" data-act="progPick" data-name="'+esc(o.name)+'">'+exThumb(o.e,"pc-th")+
+        '<div class="pc-b"><b>'+esc(o.name)+'</b><span>'+(bs?(num(bs.kg)?fmtKg(num(bs.kg))+' kg × ':'')+num(bs.reps):'')+' · '+o.sess.length+'×</span></div>'+
+        '<em class="tr '+(o.pr?"pr":o.trend>0?"up":o.trend<0?"dn":"eq")+'">'+(o.pr?"🏆":o.trend>0?"↑":o.trend<0?"↓":"→")+'</em></button>'}).join("")+'</div>';
+  }
+  h+='<div class="section-label pdet" id="progDetail">'+esc(S.progEx)+'</div>';
   const k=norm(S.progEx);
   const sess=[];
   for(const w of S.workouts){
@@ -1940,17 +2000,18 @@ function renderSheet(){
 function blankSet(prev){return prev?{kg:prev.kg,reps:prev.reps}:{kg:"",reps:""}}
 
 /* ---------- oefeningen met foto's ---------- */
-let EX=[],EXBY={},EXNAME={};
+let EX=[],EXBY={},EXNAME={},EXLOOSE={};
+const loose=n=>norm(n).replace(/[^a-z0-9]+/g,"");
 const EXGROUPS=["Populair","Recent","Borst","Rug","Schouders","Benen","Armen","Buik","Alles"];
 function loadExercises(){
   return fetch("exercises.json").then(r=>r.json()).then(list=>{
     EX=list.map(([id,name,group,muscle,pop])=>({id,name,group,muscle,pop:!!pop}));
-    for(const e of EX){EXBY[e.id]=e;const k=norm(e.name);if(!EXNAME[k])EXNAME[k]=e}
+    for(const e of EX){EXBY[e.id]=e;const k=norm(e.name);if(!EXNAME[k])EXNAME[k]=e;const l=loose(e.name);if(!EXLOOSE[l]||e.pop)EXLOOSE[l]=e}
     render();if(S.sheet==="workout"||S.sheet==="wtpl")renderSheet();
   }).catch(()=>{});
 }
 const exImg=(e,n)=>e.pop?"img/ex/"+e.id+"_"+n+".jpg":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/"+encodeURIComponent(e.id).replace(/%2F/g,"/")+"/"+n+".jpg";
-function exFor(ex){return (ex.exId&&EXBY[ex.exId])||EXNAME[norm(ex.name)]||null}
+function exFor(ex){return (ex.exId&&EXBY[ex.exId])||EXNAME[norm(ex.name)]||EXLOOSE[loose(ex.name)]||null}
 function exThumb(e,cls){
   if(!e)return '<span class="'+cls+' noimg">'+ICON.train+'</span>';
   return '<span class="'+cls+'"><img src="'+exImg(e,0)+'" alt="" loading="lazy" decoding="async" onerror="this.parentNode.classList.add(\'noimg\')"><img class="alt" src="'+exImg(e,1)+'" alt="" loading="lazy" decoding="async"></span>';
@@ -2158,6 +2219,8 @@ document.addEventListener("click",async ev=>{
     case "syncOverwrite":if(!S.confirmDel){S.confirmDel=true;a.textContent="Zeker? Online gegevens worden vervangen";break}S.confirmDel=false;
       try{await gh("/gists/"+lsGet(SKG),{method:"PATCH",body:JSON.stringify({files:{[SFILE]:{content:await encPayload(JSON.stringify(localPayload()))}}})});SY.mismatch=false;lsSet(SKLAST,String(Date.now()));setSyncState("ok");renderSheet();toast("Overschreven en versleuteld ✓")}catch(e){toast(e.message)}break;
     case "syncOff":if(!S.confirmDel){S.confirmDel=true;a.textContent="Zeker? Tik nogmaals";break}S.confirmDel=false;disconnectSync();break;
+    case "progGroup":S.progGroup=a.dataset.v;S.progEx=null;render();break;
+    case "progPick":{S.progEx=a.dataset.name;const y=window.scrollY;render();window.scrollTo(0,y);const el=$("#progDetail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});break}
     case "histMore":S.histN=(S.histN||20)+30;render();break;
     case "fxOn":lsSet("gym_fx","1");document.documentElement.classList.add("fx");renderSheet();break;
     case "fxOff":lsSet("gym_fx","");document.documentElement.classList.remove("fx");renderSheet();break;
