@@ -255,6 +255,25 @@ body[data-sync="err"] .gear::after{background:#ff5c5c}
 .tr.up{background:rgba(34,211,238,.18);color:#22d3ee}.tr.pr{background:rgba(255,255,255,.9)}.tr.dn{background:rgba(255,92,92,.14);color:#ff8a8a}.tr.eq{background:rgba(255,255,255,.06);color:var(--muted)}
 .pdet{font-size:15px;color:#fff;text-transform:none;letter-spacing:0;font-family:Archivo;margin-top:22px;scroll-margin-top:20px}
 @media (min-width:900px){.pgrid{grid-template-columns:1fr}}
+/* verdeling detail */
+.card.gdist{display:block;width:100%;text-align:left}
+.gd-top{display:flex;align-items:center;gap:16px}
+.donut{width:140px;height:140px;flex:none}
+.gd-leg{flex:1;display:grid;gap:6px}.gd-leg div{display:flex;align-items:center;gap:8px;font-size:14px}.gd-leg i{width:10px;height:10px;border-radius:50%}.gd-leg span{flex:1}.gd-leg b{font-family:Archivo}
+.heat{overflow-x:auto}
+.hm{display:grid;gap:4px;align-items:center;min-width:100%}
+.hm .hd{text-align:center;font-size:11px;color:var(--muted);text-transform:uppercase}
+.hm .hg{font-size:12px;font-weight:600}
+.hm i{font-style:normal;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#00151b}
+.gd-g b{font-family:Archivo;font-size:16px}.gd-g .gd-n{font-size:20px}
+.gd-g em{font-style:normal;font-size:12px;font-weight:800;padding:2px 7px;border-radius:7px;margin-left:4px}
+.gd-g em.up{background:rgba(34,211,238,.18);color:#22d3ee}.gd-g em.dn{background:rgba(255,92,92,.14);color:#ff8a8a}.gd-g em.eq{background:rgba(255,255,255,.07);color:var(--muted)}
+.gd-bar{position:relative;height:8px;border-radius:8px;background:rgba(255,255,255,.06);margin:10px 0 6px;overflow:hidden}
+.gd-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:8px}
+.gd-bar u{position:absolute;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.6);border-right:2px solid rgba(255,255,255,.6);background:rgba(255,255,255,.06)}
+.gd-meta{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+.gd-mus{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.gd-mus span{font-size:12px;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.05);text-transform:capitalize}.gd-mus b{color:#fff}
+.gd-ex{margin-top:8px;border-top:1px solid var(--line)}.gd-ex div{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}.gd-ex div:last-child{border-bottom:0}.gd-ex b{font-family:Inter;font-size:13px;color:var(--muted)}
 /* prestaties */
 .card.wcard,.card.mrowc,.meal,.hist div,.pk-card{content-visibility:auto;contain-intrinsic-size:auto 86px}
 /* oefeningen */
@@ -1060,7 +1079,7 @@ function celebrate(title,sub){
 }
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.3.0";
+const APP_VERSION="2.3.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1868,16 +1887,66 @@ function groupWeek(){
   return c;
 }
 
+function groupStats(days,offset){
+  const end=new Date(Date.now()-(offset||0)*864e5),from=iso(new Date(end-(days-1)*864e5)),to=iso(end),G={};
+  for(const w of S.workouts){if(!w.date||w.date<from||w.date>to)continue;
+    for(const ex of w.exercises||[]){const sets=(ex.sets||[]).filter(s=>num(s.kg)||num(s.reps));if(!sets.length)continue;
+      const g=exGroup(ex.name,ex.exId),o=G[g]||(G[g]={sets:0,vol:0,ex:new Map(),mus:new Map(),days:new Map()}),e=exFor(ex);
+      o.sets+=sets.length;o.vol+=sets.reduce((a,s)=>a+num(s.kg)*num(s.reps),0);
+      o.ex.set(ex.name.trim(),(o.ex.get(ex.name.trim())||0)+sets.length);
+      const mu=e?e.muscle:g.toLowerCase();o.mus.set(mu,(o.mus.get(mu)||0)+sets.length);
+      o.days.set(w.date,(o.days.get(w.date)||0)+sets.length)}}
+  return {G,from,to};
+}
+function donut(G,total){
+  const R=54,C=2*Math.PI*R;let off=0,h='';
+  for(const [g,col] of GROUPS){const v=G[g]&&G[g].sets;if(!v)continue;const len=C*v/total;
+    h+='<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="'+col+'" stroke-width="18" stroke-dasharray="'+Math.max(0,len-2).toFixed(1)+' '+C.toFixed(1)+'" stroke-dashoffset="'+(-off).toFixed(1)+'" transform="rotate(-90 70 70)"/>';off+=len}
+  return '<svg viewBox="0 0 140 140" class="donut"><circle cx="70" cy="70" r="'+R+'" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="18"/>'+h+
+    '<text x="70" y="68" text-anchor="middle" fill="#fff" font-size="26" font-weight="800" font-family="Archivo,Inter,sans-serif">'+total+'</text><text x="70" y="88" text-anchor="middle" fill="#8b919c" font-size="11">sets</text></svg>';
+}
+function sheetGdist(){
+  const d=S.draft,P=d.period||7,{G,from,to}=groupStats(P,0),prev=groupStats(P,P).G;
+  const total=Object.values(G).reduce((a,o)=>a+o.sets,0),ptotal=Object.values(prev).reduce((a,o)=>a+o.sets,0);
+  let h='<div class="sheet-head"><span style="width:60px"></span><h2>Verdeling spiergroepen</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">';
+  h+='<div class="seg" style="margin-bottom:14px">'+[[7,"7 dagen"],[14,"14 dagen"],[30,"30 dagen"]].map(([v,l])=>'<button data-act="gdPeriod" data-v="'+v+'" class="'+(P===v?"on":"")+'">'+l+'</button>').join("")+'</div>';
+  if(!total)return h+'<div class="empty"><div class="big">📊</div>Geen trainingen in deze periode.</div></div>';
+  const dd=total-ptotal;
+  h+='<div class="card gd-top" style="cursor:default">'+donut(G,total)+'<div class="gd-leg">'+GROUPS.filter(([g])=>G[g]).map(([g,c])=>'<div><i style="background:'+c+'"></i><span>'+g+'</span><b>'+Math.round(G[g].sets/total*100)+'%</b></div>').join("")+'</div></div>';
+  h+='<div class="small muted" style="margin:-4px 2px 12px">'+esc(fmtDate(from,{day:"numeric",month:"short"}))+' – '+esc(fmtDate(to,{day:"numeric",month:"short"}))+' · '+(ptotal?(dd>=0?'<b style="color:#22d3ee">+'+dd+'</b>':'<b style="color:#ff8a8a">'+dd+'</b>')+' sets t.o.v. de periode ervoor':'eerste periode')+'</div>';
+  // dag x spiergroep
+  const dates=[];for(let i=Math.min(P,14)-1;i>=0;i--)dates.push(iso(new Date(Date.now()-i*864e5)));
+  const gl=GROUPS.filter(([g])=>G[g]);const mx=Math.max(1,...gl.map(([g])=>Math.max(0,...dates.map(x=>G[g].days.get(x)||0))));
+  h+='<div class="section-label">Per dag'+(P>14?' · laatste 14 dagen':'')+'</div><div class="card heat" style="cursor:default"><div class="hm" style="grid-template-columns:78px repeat('+dates.length+',1fr)"><span></span>'+
+    dates.map(x=>'<span class="hd">'+esc(toD(x).toLocaleDateString("nl-NL",{weekday:"narrow"}))+'</span>').join("")+
+    gl.map(([g,c])=>'<span class="hg">'+g+'</span>'+dates.map(x=>{const v=G[g].days.get(x)||0;return '<i title="'+v+' sets" style="background:'+(v?c:'rgba(255,255,255,.05)')+';opacity:'+(v?(.35+.65*v/mx).toFixed(2):1)+'">'+(v||'')+'</i>'}).join("")).join("")+'</div></div>';
+  // per spiergroep
+  const wk=P/7,lo=Math.round(10*wk),hi=Math.round(20*wk);
+  h+='<div class="section-label">Per spiergroep</div>';
+  for(const [g,c] of GROUPS){const o=G[g];if(!o&&g==="Overig")continue;
+    const sets=o?o.sets:0,pd=prev[g]?prev[g].sets:0,diff=sets-pd,bar=Math.min(100,sets/Math.max(hi*1.25,1)*100);
+    h+='<div class="card gd-g" style="cursor:default;border-left:3px solid '+c+'"><div class="row between"><b><i class="gdot" style="background:'+c+'"></i>'+g+'</b><span><b class="gd-n">'+sets+'</b> sets'+(pd||sets?' <em class="'+(diff>0?"up":diff<0?"dn":"eq")+'">'+(diff>0?"+":"")+diff+'</em>':'')+'</span></div>';
+    if(g!=="Buik"&&g!=="Overig")h+='<div class="gd-bar"><i style="width:'+bar.toFixed(1)+'%;background:'+c+'"></i><u style="left:'+(lo/(hi*1.25)*100).toFixed(1)+'%;width:'+((hi-lo)/(hi*1.25)*100).toFixed(1)+'%"></u></div><div class="small muted">'+(sets<lo?'Onder de richtlijn van '+lo+'–'+hi+' sets':sets>hi?'Boven de richtlijn van '+lo+'–'+hi+' sets':'✓ Binnen de richtlijn van '+lo+'–'+hi+' sets')+'</div>';
+    if(o){h+='<div class="gd-meta"><span>'+kShort(o.vol)+' kg verplaatst</span><span>'+o.days.size+(o.days.size===1?' dag':' dagen')+'</span></div>';
+      if(o.mus.size>1)h+='<div class="gd-mus">'+[...o.mus.entries()].sort((a,b)=>b[1]-a[1]).map(([m,n])=>'<span>'+esc(m)+' <b>'+n+'</b></span>').join("")+'</div>';
+      h+='<div class="gd-ex">'+[...o.ex.entries()].sort((a,b)=>b[1]-a[1]).map(([n,k])=>'<div><span>'+esc(n)+'</span><b>'+k+' sets</b></div>').join("")+'</div>'}
+    else h+='<div class="small muted" style="margin-top:6px">Niet getraind in deze periode</div>';
+    h+='</div>';
+  }
+  h+='<p class="small muted" style="margin:14px 2px 0;line-height:1.5">De richtlijn van 10–20 harde sets per spiergroep per week is een veelgebruikt uitgangspunt voor spiergroei. Het is geen harde regel: luister ook naar je herstel.</p>';
+  return h+'</div>';
+}
+
 function viewProg(){
   let h='<header class="top"><div><h1>Progressie</h1><div class="sub">Per spiergroep en oefening</div></div>'+GEAR+'</header>';
   const all=exOverview();
   if(!all.length)return h+'<div class="empty"><div class="big">📈</div>Log eerst een paar trainingen, dan zie je hier je progressie per spiergroep.</div>';
   // verdeling over spiergroepen (laatste 7 dagen)
   const gw=groupWeek(),gt=Object.values(gw).reduce((a,b)=>a+b,0),gmax=Math.max(1,...Object.values(gw));
-  h+='<div class="card gdist" style="cursor:default"><div class="row between"><span class="hero-label">Verdeling laatste 7 dagen</span><span class="small muted">'+gt+' sets</span></div>'+
+  h+='<button class="card gdist" data-act="gdist"><div class="row between"><span class="hero-label">Verdeling laatste 7 dagen</span><span class="small muted">'+gt+' sets · details ›</span></div>'+
     (gt?GROUPS.filter(([g])=>gw[g]).map(([g,c])=>'<div class="gbar"><span><i style="background:'+c+'"></i>'+g+'</span><em><b style="width:'+(gw[g]/gmax*100).toFixed(1)+'%;background:'+c+'"></b></em><strong>'+gw[g]+'</strong></div>').join("")+
       (()=>{const miss=GROUPS.filter(([g])=>g!=="Overig"&&g!=="Buik"&&!gw[g]).map(x=>x[0]);return miss.length?'<div class="small muted" style="margin-top:8px">Nog niet getraind deze week: <b style="color:#fff">'+miss.join(", ")+'</b></div>':'<div class="small" style="margin-top:8px;color:#7fe7fb">✓ Alle grote spiergroepen getraind</div>'})()
-     :'<div class="small muted" style="margin-top:8px">Geen trainingen in de afgelopen 7 dagen.</div>')+'</div>';
+     :'<div class="small muted" style="margin-top:8px">Geen trainingen in de afgelopen 7 dagen.</div>')+'</button>';
   // spiergroep-knoppen
   const gc={};for(const o of all)gc[o.group]=(gc[o.group]||0)+1;
   if(S.progGroup&&S.progGroup!=="Alles"&&!gc[S.progGroup])S.progGroup="Alles";
@@ -1993,7 +2062,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
   setTimeout(()=>{if(S.sheet==="workout"&&S.draft)S.draft.exercises.forEach((_,i)=>refreshSetBadges(i))},0);
-  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():sheetContent();
+  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():S.sheet==="gdist"?sheetGdist():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
 
@@ -2219,6 +2288,8 @@ document.addEventListener("click",async ev=>{
     case "syncOverwrite":if(!S.confirmDel){S.confirmDel=true;a.textContent="Zeker? Online gegevens worden vervangen";break}S.confirmDel=false;
       try{await gh("/gists/"+lsGet(SKG),{method:"PATCH",body:JSON.stringify({files:{[SFILE]:{content:await encPayload(JSON.stringify(localPayload()))}}})});SY.mismatch=false;lsSet(SKLAST,String(Date.now()));setSyncState("ok");renderSheet();toast("Overschreven en versleuteld ✓")}catch(e){toast(e.message)}break;
     case "syncOff":if(!S.confirmDel){S.confirmDel=true;a.textContent="Zeker? Tik nogmaals";break}S.confirmDel=false;disconnectSync();break;
+    case "gdist":openSheet("gdist",{period:7});break;
+    case "gdPeriod":d.period=+a.dataset.v;renderSheet();break;
     case "progGroup":S.progGroup=a.dataset.v;S.progEx=null;render();break;
     case "progPick":{S.progEx=a.dataset.name;const y=window.scrollY;render();window.scrollTo(0,y);const el=$("#progDetail");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});break}
     case "histMore":S.histN=(S.histN||20)+30;render();break;
