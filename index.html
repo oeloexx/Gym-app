@@ -1303,7 +1303,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.4.1";
+const APP_VERSION="2.4.2";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1943,7 +1943,7 @@ function syncSection(){
     '<p class="small muted" style="margin:10px 0 0">Koppel je laptop met dezelfde sleutel. Bewaar hem ergens veilig, bijvoorbeeld in je wachtwoordmanager.</p></div>';
 }
 
-/* ---------- sessie: gymtimer + Apple Health via Opdrachten ---------- */
+/* ---------- sessie: gymtimer ---------- */
 const RUNKEY="gym_run";
 const getRun=()=>{try{return JSON.parse(localStorage.getItem(RUNKEY)||"null")}catch(e){return null}};
 const setRun=r=>{try{r?localStorage.setItem(RUNKEY,JSON.stringify(r)):localStorage.removeItem(RUNKEY)}catch(e){}};
@@ -1961,14 +1961,9 @@ function updRunPill(){const r=getRun();let el=$("#runPill");
 function stopRun(){const r=getRun();if(!r)return;clearInterval(RUNT);setRun(null);updRunPill();
   const end=Date.now(),ws=S.workouts.filter(w=>w.sessionId===r.id);
   openSheet("sessEnd",{id:r.id,start:r.start,end,dur:Math.round((end-r.start)/1000),date:iso(new Date(r.start)),workoutIds:ws.map(w=>w.id),kcal:"",hrAvg:"",hrMax:"",note:"",isNew:true})}
-function healthURL(d){const mins=Math.max(1,Math.ceil((Date.now()-d.start)/60000)+1);return "shortcuts://run-shortcut?name="+encodeURIComponent("Gym Health")+"&input=text&text="+mins}
-function parseHealth(t){t=String(t||"");const i=t.toUpperCase().indexOf("GYMHEALTH");if(i<0)return null;
-  const toN=x=>{x=String(x||"").replace(/[^\d.,]/g,"");if(!x)return NaN;if(x.includes(",")&&x.includes("."))x=x.lastIndexOf(",")>x.lastIndexOf(".")?x.replace(/\./g,"").replace(",","."):x.replace(/,/g,"");else x=x.replace(",",".");return parseFloat(x)};
-  const p=t.slice(i+9).split("|").map(x=>x.trim());while(p.length&&!p[0])p.shift();const k=toN(p[0]),a=toN(p[1]),m=toN(p[2]);
-  if(isNaN(k)&&isNaN(a))return null;return {kcal:isNaN(k)?"":Math.round(k),hrAvg:isNaN(a)?"":Math.round(a),hrMax:isNaN(m)?"":Math.round(m)}}
 function viewSess(){
   const r=getRun();
-  let h='<header class="top"><div><div class="hello">Gymtimer & Apple Health</div><h1>Sessie</h1></div>'+GEAR+'</header>';
+  let h='<header class="top"><div><div class="hello">Gymtimer</div><h1>Sessie</h1></div>'+GEAR+'</header>';
   if(r){
     const ws=S.workouts.filter(w=>w.sessionId===r.id);
     h+='<div class="hero sess-run"><div class="ring"><div><span class="small muted">Bezig sinds '+new Date(r.start).toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})+'</span><b id="bigTimer">'+hms((Date.now()-r.start)/1000)+'</b></div></div>'+
@@ -1982,8 +1977,7 @@ function viewSess(){
   const ss=S.sessions.slice().sort((a,b)=>b.start-a.start),wk=ss.filter(x=>x.date>=weekStart(new Date()));
   const sum=(arr,k)=>arr.reduce((a,x)=>a+num(x[k]),0);
   const dS=x=>{const h=Math.floor(x/3600),m=Math.round(x%3600/60);return h?h+"u "+pad(m)+"m":m+" min"};
-  h+='<div class="stats"><div class="stat"><b>'+dS(sum(wk,"dur"))+'</b><span>deze week</span></div><div class="stat"><b>'+(ss.length?dS(sum(ss,"dur")/ss.length):"–")+'</b><span>gem. sessie</span></div><div class="stat"><b>'+(sum(wk,"kcal")?Math.round(sum(wk,"kcal")):"–")+'</b><span>kcal deze week</span></div></div>';
-  h+='<button class="card hlth" data-act="healthHelp"><b>❤️ Apple Health koppelen</b><span>Eénmalig een Opdracht maken, dan komen kcal en hartslag na elke sessie binnen ›</span></button>';
+  h+='<div class="stats"><div class="stat"><b>'+dS(sum(wk,"dur"))+'</b><span>deze week</span></div><div class="stat"><b>'+(ss.length?dS(sum(ss,"dur")/ss.length):"–")+'</b><span>gem. sessie</span></div><div class="stat"><b>'+wk.length+'</b><span>sessies (week)</span></div></div>';
   if(ss.length){h+='<div class="section-label">Geschiedenis</div>';
     for(const x of ss.slice(0,30)){const ws=S.workouts.filter(w=>(x.workoutIds||[]).includes(w.id));
       h+='<button class="card sesrow" data-act="editSess" data-id="'+esc(x.id)+'"><div class="dblock"><b>'+toD(x.date).getDate()+'</b><span>'+esc(toD(x.date).toLocaleDateString("nl-NL",{weekday:"short"}))+'</span></div><div class="wbody"><b>'+(ws.length?esc(ws.map(w=>w.name).join(" + ")):"Gymsessie")+'</b>'+
@@ -1995,28 +1989,10 @@ function sheetSessEnd(){const d=S.draft,ws=S.workouts.filter(w=>(d.workoutIds||[
   let h='<div class="sheet-head"><span style="width:60px"></span><h2>'+(isNew?"Sessie klaar 💪":"Sessie")+'</h2><button class="save" data-act="saveSess">Opslaan</button></div><div class="sheet-body">';
   h+='<div class="hero" style="text-align:center"><div class="hero-label">'+esc(fmtDate(d.date,{weekday:"long",day:"numeric",month:"long"}))+'</div><div class="sess-dur">'+durTxt(d.dur)+'</div><div class="small muted">'+new Date(d.start).toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})+' – '+new Date(d.end).toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"})+'</div>'+
     (ws.length?'<div class="small" style="margin-top:8px;color:#7fe7fb">'+ws.map(w=>esc(w.name)+' · '+setCount(w)+' sets · '+kShort(volume(w))+' kg').join("<br>")+'</div>':'')+'</div>';
-  h+='<div class="section-label">❤️ Apple Health</div><div class="card" style="cursor:default">';
-  if(isNew||Date.now()-d.end<6*3600e3)h+='<div class="grid2"><a class="btn primary" href="'+healthURL(d)+'">1. Haal op uit Health</a><button class="btn" data-act="pasteHealth">2. 📋 Plak resultaat</button></div><p class="small muted" style="margin:8px 0 12px">Tik op 1, de Opdracht kopieert je gegevens. Kom terug en tik op 2.</p>';
-  h+='<div class="grid2"><div class="field"><label>Verbrand (kcal)</label><input data-f="kcal" inputmode="numeric" value="'+esc(d.kcal)+'"></div><div class="field"><label>Gem. hartslag (bpm)</label><input data-f="hrAvg" inputmode="numeric" value="'+esc(d.hrAvg)+'"></div><div class="field"><label>Max. hartslag (bpm)</label><input data-f="hrMax" inputmode="numeric" value="'+esc(d.hrMax)+'"></div><div class="field"><label>Duur (min)</label><input data-f="durMin" inputmode="numeric" value="'+Math.round(d.dur/60)+'"></div></div></div>';
+  h+='<div class="field"><label>Duur (min)</label><input data-f="durMin" inputmode="numeric" value="'+Math.round(d.dur/60)+'"></div>';
   h+='<div class="field"><label>Notitie</label><textarea data-f="note" placeholder="Hoe ging het?">'+esc(d.note||"")+'</textarea></div>';
   if(!isNew)h+='<button class="btn danger block" data-act="delSess">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Sessie verwijderen")+'</button>';
   return h+'</div>'}
-function sheetHealthHelp(){
-  return '<div class="sheet-head"><span style="width:60px"></span><h2>Apple Health</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body hh">'+
-  '<p class="small muted">Een web-app mag niet zelf bij Apple Health. De <b>Opdrachten</b>-app wel. Je maakt één keer een Opdracht die je kcal en hartslag uitleest en kopieert. Duurt ±3 minuten.</p>'+
-  '<div class="card" style="cursor:default"><b>Maak de Opdracht</b><ol>'+
-  '<li>Open <b>Opdrachten</b> → <b>+</b> → noem hem precies <b>Gym Health</b></li>'+
-  '<li>Tik op het ⓘ-icoon → zet <b>Toon in deelpaneel</b> aan → bij <b>Ontvang</b> kies <b>Tekst</b>. Zo krijgt hij het aantal minuten van je sessie.</li>'+
-  '<li>Voeg toe: <b>Zoek gezondheidsmonsters</b> → Type: <b>Actieve energie</b> → filter <b>Startdatum</b> · <b>is in de laatste</b> → tik op het getal en kies <b>Invoer van opdracht</b> · <b>minuten</b></li>'+
-  '<li>Voeg toe: <b>Bereken statistieken</b> → <b>Som</b> van de gezondheidsmonsters</li>'+
-  '<li>Voeg nogmaals <b>Zoek gezondheidsmonsters</b> toe → Type: <b>Hartslag</b> → zelfde filter als stap 3</li>'+
-  '<li>Voeg toe: <b>Bereken statistieken</b> → <b>Gemiddelde</b> (van de hartslag)</li>'+
-  '<li>Voeg toe: <b>Bereken statistieken</b> → <b>Maximum</b> (ook van de hartslag-monsters)</li>'+
-  '<li>Voeg toe: <b>Tekst</b> en typ: <code>GYMHEALTH|</code>[Som]<code>|</code>[Gemiddelde]<code>|</code>[Maximum] (tik op de variabelen boven het toetsenbord)</li>'+
-  '<li>Voeg toe: <b>Kopieer naar klembord</b> en eventueel <b>Toon melding</b> “Terug naar Gym”</li>'+
-  '<li>Eerste keer: geef toestemming voor <b>Gezondheid</b> als iOS daarom vraagt</li></ol></div>'+
-  '<div class="card" style="cursor:default"><b>Gebruiken</b><ol><li>Start in de app je sessie met <b>START</b></li><li>Tip: start op je Apple Watch ook een workout <b>Krachttraining</b>, dan meet je horloge je hartslag continu</li><li>Na je training: <b>■ Stop</b> → <b>Haal op uit Health</b> → kom terug → <b>Plak resultaat</b></li></ol></div>'+
-  '<p class="small muted">Zonder Apple Watch meet je iPhone alleen een schatting van je actieve energie en geen hartslag. Je kunt de waarden ook altijd zelf invullen.</p></div>'}
 
 /* ---------- derived ---------- */
 const sortedWorkouts=()=>S.workouts.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
@@ -2454,7 +2430,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
   setTimeout(()=>{if(S.sheet==="workout"&&S.draft)S.draft.exercises.forEach((_,i)=>refreshSetBadges(i))},0);
-  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():S.sheet==="gdist"?sheetGdist():S.sheet==="sessEnd"?sheetSessEnd():S.sheet==="mealTpl"?sheetMealTpl():S.sheet==="mealsManage"?sheetMealsManage():S.sheet==="supps"?sheetSupps():S.sheet==="healthHelp"?sheetHealthHelp():sheetContent();
+  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():S.sheet==="gdist"?sheetGdist():S.sheet==="sessEnd"?sheetSessEnd():S.sheet==="mealTpl"?sheetMealTpl():S.sheet==="mealsManage"?sheetMealsManage():S.sheet==="supps"?sheetSupps():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
 
@@ -2704,9 +2680,6 @@ document.addEventListener("click",async ev=>{
     case "wrapped":openWrapped(a.dataset.k);break;
     case "startRun":startRun(a.dataset.tpl);break;
     case "stopRun":if(!S.confirmDel){S.confirmDel=true;a.textContent="Tik nogmaals om te stoppen";setTimeout(()=>{S.confirmDel=false;if(S.tab==="sess"&&!S.sheet)render()},3000);break}S.confirmDel=false;stopRun();render();break;
-    case "healthHelp":openSheet("healthHelp",{});break;
-    case "pasteHealth":{let t="";try{t=await navigator.clipboard.readText()}catch(e){toast("Plakken mislukt. Geef toestemming of vul het zelf in.");break}
-      const r=parseHealth(t);if(!r){toast("Geen Health-gegevens op het klembord. Draai eerst de Opdracht.");break}Object.assign(d,r);renderSheet();toast("❤️ Health-gegevens ingevuld");break}
     case "saveSess":{const x={id:d.id,start:d.start,end:d.end,date:d.date,dur:num(d.durMin)?num(d.durMin)*60:d.dur,workoutIds:d.workoutIds||[],kcal:num(d.kcal)||null,hrAvg:num(d.hrAvg)||null,hrMax:num(d.hrMax)||null,note:(d.note||"").trim()};
       const old=S.sessions.find(y=>y.id===d.id);x.createdAt=old&&old.createdAt||Date.now();
       try{await Store.save("sessions",x);closeSheet();toast("Sessie opgeslagen ⏱")}catch(e){toast(failMsg(e))}break}
