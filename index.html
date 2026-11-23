@@ -1309,7 +1309,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.5.1";
+const APP_VERSION="2.5.2";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1571,11 +1571,25 @@ function muscleOf(name,exId){const e=(exId&&EXBY[exId])||EXNAME[norm(name)]||EXL
   if(/curl/.test(n)&&!/leg/.test(n))return "Biceps";if(/pushdown|tricep|skull|kickback|french press|dip/.test(n))return "Triceps";
   if(/calf|kuit/.test(n))return "Kuiten";if(/hip thrust|glute|bil/.test(n))return "Billen";
   const g=exGroup(name,exId);return g==="Armen"?"Armen":g}
-function viewLink(w){const ses=S.sessions.find(x=>(x.workoutIds||[]).includes(w.id)),prs=workoutPRs(w);
+function viewData(w){const ses=S.sessions.find(x=>(x.workoutIds||[]).includes(w.id)),prs=workoutPRs(w);
   const o={n:w.name||"Training",d:w.date,a:lsGet(NKEY)||"",t:ses?Math.round(ses.dur/60):0,
     e:(w.exercises||[]).map(ex=>{const sets=(ex.sets||[]).filter(s=>num(s.reps));return sets.length?[ex.name,ex.exId||"",muscleOf(ex.name,ex.exId),sets.map(s=>[num(s.kg),num(s.reps)]),prs.has(norm(ex.name))?1:0]:null}).filter(Boolean)};
-  return location.origin+location.pathname+"#v="+b64e(JSON.stringify(o))}
-function renderViewPage(){let o;try{o=JSON.parse(b64d(location.hash.slice(3)))}catch(e){o=null}
+  return o}
+const viewLink=w=>location.origin+location.pathname+"#v="+b64e(JSON.stringify(viewData(w)));
+const SHG="gym_share_gist";
+async function shortViewLink(w){if(!lsGet(SKT))return null;const data=JSON.stringify(viewData(w)),key=Math.random().toString(36).slice(2,8);
+  const mk=async()=>{const g=await gh("/gists",{method:"POST",body:JSON.stringify({description:"Gym app – gedeelde trainingen (alleen te zien via de link)",public:false,files:{"README.md":{content:"Trainingen die gedeeld zijn vanuit de Gym-app. Alleen zichtbaar voor wie de link heeft."}}})});lsSet(SHG,g.id);return g.id};
+  let id=lsGet(SHG)||await mk();
+  const put=gid=>gh("/gists/"+gid,{method:"PATCH",body:JSON.stringify({files:{[key+".json"]:{content:data}}})});
+  try{await put(id)}catch(e){if(/niet gevonden/.test(e.message)){id=await mk();await put(id)}else throw e}
+  return location.origin+location.pathname+"#g="+id+"."+key}
+async function loadViewData(){const h=location.hash;
+  if(h.startsWith("#v="))return JSON.parse(b64d(h.slice(3)));
+  const m=h.match(/^#g=([0-9a-f]+)\.([a-z0-9]+)$/i);if(!m)return null;
+  const r=await fetch("https://api.github.com/gists/"+m[1],{headers:{Accept:"application/vnd.github+json"}});if(!r.ok)return null;
+  const g=await r.json(),f=g.files&&g.files[m[2]+".json"];if(!f)return null;
+  if(f.truncated&&f.raw_url)return await (await fetch(f.raw_url)).json();return JSON.parse(f.content)}
+async function renderViewPage(){let o;try{o=await loadViewData()}catch(e){o=null}
   document.title=o?(o.n+" · "+(o.a||"Training")):"Training";
   const css='<style>body{margin:0;background:#070b0e;color:#e8f4f8;font-family:Inter,system-ui,-apple-system,sans-serif;-webkit-user-select:text;user-select:text}'+
     '.vw{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 28px) 18px calc(env(safe-area-inset-bottom) + 40px)}'+
@@ -1598,7 +1612,7 @@ function renderViewPage(){let o;try{o=JSON.parse(b64d(location.hash.slice(3)))}c
     return '<img src="'+esc(src)+'" alt="" onerror="this.outerHTML=\'<span class=ph>🏋️</span>\'">'};
   let h=css+'<div class="vw"><div class="vh"><small>'+(o.a?'Training van '+esc(o.a):'Training')+'</small><h1>'+esc(o.n)+'</h1><p>'+esc(date)+'</p>'+
     '<div class="vs"><div><b>'+o.e.length+'</b><span>oefeningen</span></div><div><b>'+nsets+'</b><span>sets</span></div>'+(vol?'<div><b>'+Math.round(vol).toLocaleString("nl-NL")+' kg</b><span>totaal getild</span></div>':'')+(o.t?'<div><b>'+o.t+' min</b><span>duur</span></div>':'')+(prn?'<div><b>'+prn+' 🏆</b><span>record'+(prn>1?'s':'')+'</span></div>':'')+'</div></div>';
-  h+='<div class="vl">Getrainde spiergroepen</div><div class="vm">'+Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([g,n])=>'<span><i style="background:'+(MCOL[g]||"#94a3b8")+'"></i>'+esc(g)+' · '+n+' sets</span>').join("")+'</div>';
+  h+='<div class="vl">Getrainde spiergroepen</div><div class="vm">'+Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([g,n])=>'<span><i style="background:'+(MCOL[g]||"#94a3b8")+'"></i>'+esc(g)+' · '+n+(n===1?' set':' sets')+'</span>').join("")+'</div>';
   h+='<div class="vl">Oefeningen</div>';
   for(const x of o.e){h+='<div class="ve'+(x[4]?' pr':'')+'"><div class="vt">'+img(x)+'<div><b>'+esc(x[0])+'</b><span class="tag" style="background:'+(MCOL[x[2]]||"#94a3b8")+'">'+esc(x[2])+'</span>'+(x[4]?'<span class="prb">🏆 Nieuw record</span>':'')+'</div></div>'+
     '<table><tr><th>Set</th><th>Gewicht</th><th>Herhalingen</th></tr>'+x[3].map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+(s[0]?String(s[0]).replace(".",",")+' kg':'eigen gewicht')+'</td><td>'+s[1]+'×</td></tr>').join("")+'</table></div>'}
@@ -2805,7 +2819,9 @@ document.addEventListener("click",async ev=>{
     case "shareW":{const w=S.workouts.find(x=>x.id===d.id);if(w)openSheet("share",{w:clone(w)});break}
     case "shareT":{const t=getWT().find(x=>x.id===d.id);if(t)openSheet("share",{t:clone(t)});break}
     case "shImg":{a.disabled=true;toast("Afbeelding maken…");try{const b=await workoutImage(d.w);if(b)await shareBlob(b,(d.w.name||"training").toLowerCase().replace(/\W+/g,"-")+".png");else toast("Afbeelding maken lukte niet")}catch(e){toast("Afbeelding maken lukte niet")}a.disabled=false;break}
-    case "shView":await shareText((d.w.name||"Training")+" van vandaag 💪 Tik om te bekijken:\n"+viewLink(d.w),d.w.name||"Training");break;
+    case "shView":{a.disabled=true;let link=null;try{toast("Link maken…");link=await shortViewLink(d.w)}catch(e){}a.disabled=false;
+      if(!link){link=viewLink(d.w);if(!lsGet(SKT))toast("Tip: met sync aan wordt de link veel korter")}
+      await shareText((d.w.name||"Training")+" 💪 Tik om te bekijken:\n"+link,d.w.name||"Training");break}
     case "shTxt":await shareText(workoutText(d.w),d.w.name||"Training");break;
     case "shTpl":{const src=d.t||{name:d.w.name||"Training",exercises:(d.w.exercises||[]).map(e=>({name:e.name,exId:e.exId,sets:(e.sets||[]).filter(s=>num(s.reps)).length||3}))};
       await shareText("💪 Mijn "+src.name+"-schema. Tik op de link om het in je Gym-app te zetten:\n"+tplLink(src),src.name);break}
@@ -2953,9 +2969,9 @@ function refreshCopy(){
     $("#sheet .grid2").after(b);
   }
 }
-window.addEventListener("hashchange",()=>{if(location.hash.startsWith("#v=")){location.reload();return}if(location.hash.startsWith("#s=")){checkShareLink();return}const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+window.addEventListener("hashchange",()=>{if(/^#[vg]=/.test(location.hash)){location.reload();return}if(location.hash.startsWith("#s=")){checkShareLink();return}const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 
-if(location.hash.startsWith("#v=")){fetch("exercises.json").then(r=>r.json()).then(list=>{for(const [id,name,group,muscle,pop] of list)EXBY[id]={id,name,group,muscle,pop:!!pop}}).catch(()=>{}).finally(renderViewPage);return}
+if(/^#[vg]=/.test(location.hash)){fetch("exercises.json").then(r=>r.json()).then(list=>{for(const [id,name,group,muscle,pop] of list)EXBY[id]={id,name,group,muscle,pop:!!pop}}).catch(()=>{}).finally(renderViewPage);return}
 if(lsGet("gym_fx"))document.documentElement.classList.add("fx");
 render();
 Store.init();
