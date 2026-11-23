@@ -388,6 +388,12 @@ body[data-sync="err"] .gear::after{background:#ff5c5c}
 .wtop li{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:rgba(0,0,0,.22)}.wtop li span{font-family:Archivo;font-weight:800;width:24px}.wtop li b{flex:1;font-size:16px}.wtop li em{font-style:normal;opacity:.8;font-size:14px}
 .wbars{display:flex;flex-direction:column;gap:12px;margin-top:16px}.wbars div{display:grid;grid-template-columns:90px 1fr 44px;align-items:center;gap:10px}
 .wbars span{font-size:15px}.wbars i{height:14px;border-radius:7px;background:rgba(255,255,255,.1);overflow:hidden}.wbars em{display:block;height:100%;border-radius:7px}.wbars b{text-align:right;font-family:Archivo}
+/* delen */
+.shbtn{border-color:rgba(34,211,238,.4)!important;color:#7fe7fb}
+.shopts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.shopt{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left;padding:14px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.shopt span{grid-row:1/3;font-size:30px;text-align:center}.shopt b{font-family:Archivo;font-size:16px}.shopt small{color:var(--muted);font-size:13px}
+.shopt:active{transform:scale(.98)}.shopt:disabled{opacity:.5}
 /* prestaties */
 .card.wcard,.card.mrowc,.meal,.hist div,.pk-card{content-visibility:auto;contain-intrinsic-size:auto 86px}
 /* oefeningen */
@@ -1303,7 +1309,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.4.2";
+const APP_VERSION="2.5.0";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1484,6 +1490,78 @@ function sheetFood(){
   return h+'</div>';
 }
 function calcBox(v){return '<div class="calcbox"><div><b>'+v.kcal+'</b><span>kcal</span></div><div><b>'+v.p+'</b><span>eiwit</span></div><div><b>'+v.c+'</b><span>koolh.</span></div><div><b>'+v.f+'</b><span>vet</span></div></div>'}
+/* ---------- trainingen & schema's delen ---------- */
+const b64e=s=>btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const b64d=s=>{s=s.replace(/-/g,"+").replace(/_/g,"/");while(s.length%4)s+="=";return decodeURIComponent(escape(atob(s)))};
+function tplLink(t){const o={n:t.name,e:(t.exercises||[]).map(e=>[e.name,e.exId||"",num(e.sets)||(e.sets&&e.sets.length)||3])};
+  return location.origin+location.pathname+"#s="+b64e(JSON.stringify(o))}
+function parseTplLink(h){try{const o=JSON.parse(b64d(h));if(!o||!o.n||!Array.isArray(o.e))return null;
+  return {id:uid(),name:String(o.n).slice(0,40),exercises:o.e.slice(0,30).map(x=>({name:String(x[0]).slice(0,60),exId:x[1]?String(x[1]):undefined,sets:Math.min(10,Math.max(1,num(x[2])||3))}))}}catch(e){return null}}
+const setTxt=s=>num(s.kg)?fmtKg(num(s.kg))+" kg × "+num(s.reps):num(s.reps)+" reps";
+function workoutPRs(w){const out=new Set();for(const ex of w.exercises||[]){const st=exStats(ex),b=allTimeBefore(ex.name,w.id,w.date);if(b.best&&st.best>b.best+.01)out.add(norm(ex.name))}return out}
+function workoutText(w){const prs=workoutPRs(w),ses=S.sessions.find(x=>(x.workoutIds||[]).includes(w.id));
+  let t="💪 "+(w.name||"Training")+" · "+fmtDate(w.date,{weekday:"long",day:"numeric",month:"long"})+"\n";
+  for(const ex of w.exercises||[]){const sets=(ex.sets||[]).filter(s=>num(s.reps));if(!sets.length)continue;
+    t+="\n"+ex.name+(prs.has(norm(ex.name))?" 🏆 PR":"")+"\n"+sets.map(s=>"  • "+setTxt(s)).join("\n")}
+  t+="\n\n"+setCount(w)+" sets · "+kShort(volume(w))+" kg totaal"+(ses?" · ⏱ "+Math.round(ses.dur/60)+" min":"");
+  return t}
+const loadSrcImg=src=>new Promise(r=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src;setTimeout(()=>r(null),2500)});
+async function workoutImage(w){
+  try{await document.fonts.load('200px "Kaushan Script"')}catch(e){}
+  const W=1080,H=1920,c=document.createElement("canvas");c.width=W;c.height=H;const x=c.getContext("2d");
+  let g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#04212a");g.addColorStop(.5,"#070b0e");g.addColorStop(1,"#2a1306");x.fillStyle=g;x.fillRect(0,0,W,H);
+  g=x.createRadialGradient(W*.85,160,0,W*.85,160,650);g.addColorStop(0,"rgba(34,211,238,.4)");g.addColorStop(1,"rgba(34,211,238,0)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  g=x.createRadialGradient(W*.1,H*.95,0,W*.1,H*.95,700);g.addColorStop(0,"rgba(255,140,60,.35)");g.addColorStop(1,"rgba(255,140,60,0)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.roundRect?x.roundRect(X,Y,w,h,r):x.rect(X,Y,w,h)};
+  x.textAlign="center";x.fillStyle="#9be7f7";x.font="700 40px Inter,system-ui,sans-serif";
+  x.fillText(fmtDate(w.date,{weekday:"long",day:"numeric",month:"long"}).toUpperCase(),W/2,170);
+  const tg=x.createLinearGradient(200,0,880,0);tg.addColorStop(0,"#fff");tg.addColorStop(.5,"#38bdf8");tg.addColorStop(1,"#e6fbff");
+  x.fillStyle=tg;x.shadowColor="rgba(34,211,238,.5)";x.shadowBlur=40;let fs=170;x.font=fs+'px "Kaushan Script",cursive';
+  const title=(w.name||"Training");while(x.measureText(title).width>900&&fs>80){fs-=10;x.font=fs+'px "Kaushan Script",cursive'}x.fillText(title,W/2,350);x.shadowBlur=0;
+  const prs=workoutPRs(w),ses=S.sessions.find(s=>(s.workoutIds||[]).includes(w.id));
+  const stats=[[String(setCount(w)),"sets"],[kShort(volume(w))+" kg","volume"]];if(ses)stats.push([Math.round(ses.dur/60)+" min","duur"]);if(prs.size)stats.push([String(prs.size),"PR’s 🏆"]);
+  const bw=(W-160-(stats.length-1)*20)/stats.length;stats.forEach(([v,l],i)=>{const bx=80+i*(bw+20);x.fillStyle="rgba(255,255,255,.07)";rr(bx,410,bw,150,32);x.fill();
+    x.fillStyle="#fff";x.font="800 58px Inter,system-ui,sans-serif";x.fillText(v,bx+bw/2,488);x.fillStyle="#9be7f7";x.font="600 28px Inter,system-ui,sans-serif";x.fillText(l,bx+bw/2,532)});
+  const exs=(w.exercises||[]).filter(e=>(e.sets||[]).some(s=>num(s.reps))).slice(0,7);
+  const rowH=Math.min(170,(1700-620)/Math.max(1,exs.length));let y=620;
+  for(const ex of exs){const sets=ex.sets.filter(s=>num(s.reps)),e=exFor(ex),pr=prs.has(norm(ex.name));
+    x.fillStyle=pr?"rgba(255,200,80,.12)":"rgba(255,255,255,.06)";rr(80,y,W-160,rowH-20,30);x.fill();
+    if(pr){x.strokeStyle="rgba(255,200,80,.55)";x.lineWidth=3;rr(80,y,W-160,rowH-20,30);x.stroke()}
+    const ih=rowH-50;let tx=120;
+    if(e&&ih>60){const im=await loadSrcImg(exImg(e,0));if(im){x.save();rr(110,y+15,ih,ih,20);x.clip();x.fillStyle="#fff";x.fillRect(110,y+15,ih,ih);const s=Math.max(ih/im.width,ih/im.height);x.drawImage(im,110+(ih-im.width*s)/2,y+15+(ih-im.height*s)/2,im.width*s,im.height*s);x.restore();tx=110+ih+28}}
+    x.textAlign="left";x.fillStyle="#fff";let nf=46;x.font="800 "+nf+"px Inter,system-ui,sans-serif";let nm=ex.name;const maxW=W-120-tx-(pr?90:0);
+    while(x.measureText(nm).width>maxW&&nm.length>4)nm=nm.slice(0,-2)+"…";x.fillText(nm,tx,y+(rowH-20)/2-6);
+    const best=sets.reduce((a,s)=>e1rm(num(s.kg),num(s.reps))>e1rm(num(a.kg),num(a.reps))?s:a,sets[0]);
+    x.fillStyle="rgba(230,249,255,.7)";x.font="500 32px Inter,system-ui,sans-serif";x.fillText(sets.length+(sets.length===1?" set":" sets")+" · beste "+setTxt(best),tx,y+(rowH-20)/2+40);
+    if(pr){x.textAlign="right";x.font="56px system-ui";x.fillText("🏆",W-110,y+(rowH-20)/2+18)}
+    x.textAlign="center";y+=rowH}
+  const name=lsGet(NKEY);if(name){x.fillStyle=tg;x.font='90px "Kaushan Script",cursive';x.fillText(name,W/2,H-110)}
+  return new Promise(r=>c.toBlob(r,"image/png"))}
+async function shareBlob(blob,fname){const file=new File([blob],fname,{type:"image/png"});
+  try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file]});return}}catch(e){if(e&&e.name==="AbortError")return}
+  const url=URL.createObjectURL(blob),ov=document.createElement("div");ov.className="imgov";ov.innerHTML='<img src="'+url+'" alt="Training"><p>Houd de afbeelding ingedrukt om hem op te slaan of te delen</p><button class="btn block" data-close>Sluiten</button>';
+  ov.addEventListener("click",ev=>{if(ev.target.closest("[data-close]")||ev.target===ov){ov.remove();URL.revokeObjectURL(url)}});document.body.appendChild(ov)}
+async function shareText(text,title){try{if(navigator.share){await navigator.share({title,text});return}}catch(e){if(e&&e.name==="AbortError")return}
+  try{await navigator.clipboard.writeText(text);toast("📋 Gekopieerd, plak het waar je wilt")}catch(e){toast("Delen lukte niet")}}
+function sheetShare(){const d=S.draft,w=d.w,t=d.t;
+  let h='<div class="sheet-head"><span style="width:60px"></span><h2>Delen</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">';
+  if(w)h+='<div class="hero" style="text-align:center"><div class="hero-label">'+esc(fmtDate(w.date,{weekday:"long",day:"numeric",month:"long"}))+'</div><div class="sess-dur">'+esc(w.name||"Training")+'</div><div class="small muted">'+setCount(w)+' sets · '+kShort(volume(w))+' kg</div></div>'+
+    '<div class="shopts"><button class="shopt" data-act="shImg"><span>📸</span><b>Als afbeelding</b><small>Mooie story voor Instagram of WhatsApp</small></button>'+
+    '<button class="shopt" data-act="shTxt"><span>💬</span><b>Als tekst</b><small>Alle oefeningen, sets en gewichten</small></button>'+
+    '<button class="shopt" data-act="shTpl"><span>🔗</span><b>Als schema</b><small>Link waarmee een maat deze training in zijn eigen app zet</small></button></div>';
+  else if(t)h+='<div class="hero" style="text-align:center"><div class="hero-label">Schema</div><div class="sess-dur">'+esc(t.name)+'</div><div class="small muted">'+t.exercises.map(e=>esc(e.name)).join(" · ")+'</div></div>'+
+    '<div class="shopts"><button class="shopt" data-act="shTpl"><span>🔗</span><b>Deel als link</b><small>Je maat opent de link en zet het schema met één tik in zijn eigen app</small></button>'+
+    '<button class="shopt" data-act="shTplTxt"><span>💬</span><b>Als tekst</b><small>Lijstje met oefeningen en sets</small></button></div>';
+  return h+'</div>'}
+function sheetImportTpl(){const t=S.draft;
+  return '<div class="sheet-head"><button class="link" data-act="close">Annuleer</button><h2>Gedeeld schema</h2><button class="save" data-act="importTpl">Toevoegen</button></div><div class="sheet-body">'+
+    '<div class="hero" style="text-align:center"><div class="hero-label">Iemand deelde dit schema met je</div><div class="sess-dur">'+esc(t.name)+'</div><div class="small muted">'+t.exercises.length+' oefeningen</div></div>'+
+    '<div class="list">'+t.exercises.map(e=>'<div class="frow" style="cursor:default"><div style="display:flex;gap:12px;align-items:center">'+exThumb(exFor(e),"exph")+'<div><b>'+esc(e.name)+'</b><span>'+e.sets+' sets</span></div></div></div>').join("")+'</div>'+
+    '<button class="btn primary block big" data-act="importTpl" style="margin-top:16px">＋ Toevoegen aan mijn schema’s</button></div>'}
+function checkShareLink(){const h=location.hash;if(!h.startsWith("#s="))return;const t=parseTplLink(h.slice(3));history.replaceState(null,"",location.pathname+location.search);
+  if(!t){toast("Deze schema-link werkt niet");return}
+  const go=()=>{const wl=$("#welcome");if(wl&&wl.style.display!=="none"&&!wl.classList.contains("out-up")){setTimeout(go,600);return}openSheet("importTpl",t)};go()}
+
 /* ---------- eigen maaltijden + supplementen ---------- */
 const MKEY="gym_meals",SLKEY="gym_supp_list",SGKEY="gym_supp_log";
 const getMeals=()=>{try{const l=JSON.parse(lsGet(MKEY)||"[]");return Array.isArray(l)?l:[]}catch(e){return []}};
@@ -2430,7 +2508,7 @@ function closeSheet(){S.sheet=null;S.draft=null;document.body.classList.remove("
 function renderSheet(){
   const body=$("#sheet .sheet-body");const st=body?body.scrollTop:0;
   setTimeout(()=>{if(S.sheet==="workout"&&S.draft)S.draft.exercises.forEach((_,i)=>refreshSetBadges(i))},0);
-  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():S.sheet==="gdist"?sheetGdist():S.sheet==="sessEnd"?sheetSessEnd():S.sheet==="mealTpl"?sheetMealTpl():S.sheet==="mealsManage"?sheetMealsManage():S.sheet==="supps"?sheetSupps():sheetContent();
+  $("#sheet").innerHTML=S.sheet==="workout"?sheetWorkout():S.sheet==="settings"?sheetSettings():S.sheet==="streak"?sheetStreak():S.sheet==="food"?sheetFood():S.sheet==="foodGoals"?sheetFoodGoals():S.sheet==="wtpl"?sheetTpl():S.sheet==="meas"?sheetMeas():S.sheet==="ai"?sheetAI():S.sheet==="gdist"?sheetGdist():S.sheet==="sessEnd"?sheetSessEnd():S.sheet==="share"?sheetShare():S.sheet==="importTpl"?sheetImportTpl():S.sheet==="mealTpl"?sheetMealTpl():S.sheet==="mealsManage"?sheetMealsManage():S.sheet==="supps"?sheetSupps():sheetContent();
   const nb=$("#sheet .sheet-body");if(nb)nb.scrollTop=st;
 }
 
@@ -2491,6 +2569,7 @@ function sheetWorkout(){
   h+='<div class="field" style="margin-top:14px"><label>Notitie</label><textarea data-f="note" placeholder="Hoe voelde het? Energie, slaap, pijntjes…">'+esc(d.note)+'</textarea></div>';
   if((d.exercises||[]).length){const linked=getWT().find(t=>t.id===d.tplId)||getWT().find(t=>norm(t.name)===norm(d.name));
     h+='<button class="btn block" data-act="saveAsTpl" style="margin-top:10px">💾 '+(linked?'Schema “'+esc(linked.name)+'” bijwerken met deze oefeningen':'Opslaan als schema'+(d.name?' “'+esc(d.name)+'”':''))+'</button>'}
+  if(!isNew)h+='<button class="btn block shbtn" data-act="shareW" style="margin-top:10px">📤 Training delen</button>';
   if(!isNew)h+='<button class="btn danger block" data-act="delWorkout" style="margin-top:10px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Training verwijderen")+'</button>';
   return h+'</div>';
 }
@@ -2525,6 +2604,7 @@ function sheetTpl(){
       '<button class="iconbtn" data-act="delEx" data-i="'+i+'" aria-label="Verwijder">'+ICON.trash+'</button></div></div>';
   });
   if(d.exercises.length)h+='<button class="btn primary block big" data-act="addEx">+ Oefening toevoegen</button>';
+  if(!isNew)h+='<button class="btn block shbtn" data-act="shareT" style="margin-top:14px">🔗 Schema delen</button>';
   if(!isNew)h+='<button class="btn danger block" data-act="delTpl" style="margin-top:14px">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Schema verwijderen")+'</button>';
   return h+'</div>';
 }
@@ -2678,6 +2758,14 @@ document.addEventListener("click",async ev=>{
     case "saveSupps":lsSet(SLKEY,JSON.stringify(d.list.filter(x=>(x.name||"").trim()).map(x=>({id:x.id||uid(),name:x.name.trim(),dose:(x.dose||"").trim()}))));closeSheet();toast("Supplementen opgeslagen 💊");break;
     case "cday":S.cday=S.cday===a.dataset.d?null:a.dataset.d;render();break;
     case "wrapped":openWrapped(a.dataset.k);break;
+    case "shareW":{const w=S.workouts.find(x=>x.id===d.id);if(w)openSheet("share",{w:clone(w)});break}
+    case "shareT":{const t=getWT().find(x=>x.id===d.id);if(t)openSheet("share",{t:clone(t)});break}
+    case "shImg":{a.disabled=true;toast("Afbeelding maken…");try{const b=await workoutImage(d.w);if(b)await shareBlob(b,(d.w.name||"training").toLowerCase().replace(/\W+/g,"-")+".png");else toast("Afbeelding maken lukte niet")}catch(e){toast("Afbeelding maken lukte niet")}a.disabled=false;break}
+    case "shTxt":await shareText(workoutText(d.w),d.w.name||"Training");break;
+    case "shTpl":{const src=d.t||{name:d.w.name||"Training",exercises:(d.w.exercises||[]).map(e=>({name:e.name,exId:e.exId,sets:(e.sets||[]).filter(s=>num(s.reps)).length||3}))};
+      await shareText("💪 Mijn "+src.name+"-schema. Tik op de link om het in je Gym-app te zetten:\n"+tplLink(src),src.name);break}
+    case "shTplTxt":await shareText("💪 "+d.t.name+"\n\n"+d.t.exercises.map(e=>"• "+e.name+" – "+e.sets+" sets").join("\n"),d.t.name);break;
+    case "importTpl":{const l=getWT();let n=d.name;if(l.some(x=>norm(x.name)===norm(n)))n+=" (gedeeld)";l.push({id:uid(),name:n,exercises:d.exercises});saveWT(l);closeSheet();render();toast("✅ Schema “"+n+"” toegevoegd");break}
     case "startRun":startRun(a.dataset.tpl);break;
     case "stopRun":if(!S.confirmDel){S.confirmDel=true;a.textContent="Tik nogmaals om te stoppen";setTimeout(()=>{S.confirmDel=false;if(S.tab==="sess"&&!S.sheet)render()},3000);break}S.confirmDel=false;stopRun();render();break;
     case "saveSess":{const x={id:d.id,start:d.start,end:d.end,date:d.date,dur:num(d.durMin)?num(d.durMin)*60:d.dur,workoutIds:d.workoutIds||[],kcal:num(d.kcal)||null,hrAvg:num(d.hrAvg)||null,hrMax:num(d.hrMax)||null,note:(d.note||"").trim()};
@@ -2820,7 +2908,7 @@ function refreshCopy(){
     $("#sheet .grid2").after(b);
   }
 }
-window.addEventListener("hashchange",()=>{const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+window.addEventListener("hashchange",()=>{if(location.hash.startsWith("#s=")){checkShareLink();return}const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 
 if(lsGet("gym_fx"))document.documentElement.classList.add("fx");
 render();
@@ -2841,6 +2929,7 @@ if(!lsGet("gym_once_water3l")){setWaterGoal(3000);lsSet("gym_once_water3l","1");
 })();
 loadExercises();
 tickRun();
+try{checkShareLink()}catch(e){}
 showWelcome();
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 setTimeout(()=>checkUpdate(false),1500);
