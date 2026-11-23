@@ -1309,7 +1309,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.5.2";
+const APP_VERSION="2.5.3";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -2746,7 +2746,7 @@ function sheetContent(){
   h+='<div class="field"><label>Format</label>'+seg("format",FORMATS)+'</div>';
   h+='<div class="field"><label>Platform</label>'+seg("platform",PLATFORMS)+'</div>';
   h+='<div class="field"><label>Datum (opnemen/posten)</label><input type="date" data-f="date" value="'+esc(d.date)+'"></div>';
-  h+='<div class="field"><label>Notities / shotlist</label><textarea data-f="notes" style="min-height:110px" placeholder="Shots, muziek, caption, hashtags…">'+esc(d.notes)+'</textarea></div>';
+  h+='<div class="field"><label>Notities / shotlist</label><textarea data-f="notes" style="min-height:'+((d.notes||"").length>150?300:110)+'px" placeholder="Shots, muziek, caption, hashtags…">'+esc(d.notes)+'</textarea></div>';
   if(!isNew)h+='<button class="btn danger block" data-act="delContent">'+(S.confirmDel?"Zeker weten? Tik nogmaals":"Verwijderen")+'</button>';
   return h+'</div>';
 }
@@ -2975,6 +2975,10 @@ if(/^#[vg]=/.test(location.hash)){fetch("exercises.json").then(r=>r.json()).then
 if(lsGet("gym_fx"))document.documentElement.classList.add("fx");
 render();
 Store.init();
+/* eenmalig: 3 content-ideeën (scripts) toevoegen; vaste u zodat eigen bewerkingen altijd winnen */
+try{const IDEAS=[{"id": "idee-script1", "title": "Dit had ik graag eerder geweten (fouten jaar 1)", "hook": "5 dingen die ik in mijn eerste jaar in de sportschool fout deed — nummer 3 kostte me maanden vooruitgang.", "notes": "Beat 1 – Ego liften: te zwaar gewicht, foute vorm. Laat kort zien hoe het eruitziet vs. goede vorm.\nBeat 2 – Verkeerde grip bij [oefening] — en wat wel werkt.\nBeat 3 – Nooit om een spot durven vragen — en waarom dat je juist tegenhoudt.\nBeat 4 – Geen straps bij pull-oefeningen: grip gaf het eerder op dan de rug/lats.\nBeat 5 – Fouten met gewicht/reps/rust: te snel opbouwen of te weinig rust.\n\nCTA – \"Welke herken jij van jezelf? Zet 'm in de comments.\"", "status": "Idee", "format": "Reel", "platform": "", "date": "", "createdAt": 1764000000000, "u": 1764000000000}, {"id": "idee-script2", "title": "Neef-verhaal (mentor-moment)", "hook": "Mijn neef zei ooit iets tegen me dat mijn hele leven veranderde.", "notes": "Setup – Kort: hoe je eruitzag/voelde toen je zwaarder was, schaamte op het strand.\nDe kern – Wat je neef precies zei/deed (voeding- en trainingsadvies). Houd het concreet, 1-2 zinnen quote-gevoel.\nDe omslag – Wat je daarna deed, en hoe dat voelde na de eerste weken/maanden.\nReflectie – Waarom je dit nu deelt: je wilt voor anderen zijn wat hij voor jou was.\n\nCTA – \"Als iemand jou ooit zo'n zetje gaf — tag diegene.\" of \"Stuur dit door naar iemand die het nodig heeft.\"", "status": "Idee", "format": "Reel", "platform": "", "date": "", "createdAt": 1764000000001, "u": 1764000000001}, {"id": "idee-script3", "title": "Educatief: oefening in 20 sec", "hook": "Doe jij [oefening] zo? Dan laat je spierpijn liggen — niet gains.", "notes": "Fout – Laat de veelgemaakte fout zien (1-2 sec clip).\nFix – Laat de juiste uitvoering zien, met 1 kernpunt erbij als tekst op scherm.\nWaarom – Korte uitleg waarom dit beter is (spiergroep, blessurerisico, etc.).\n\nCTA – \"Probeer dit de volgende keer en laat weten of je het verschil voelt.\"", "status": "Idee", "format": "Reel", "platform": "", "date": "", "createdAt": 1764000000002, "u": 1764000000002}],del=(jget(SKD,{}).content)||{};let add=0;
+  for(const x of IDEAS)if(!S.content.some(c=>c.id===x.id)&&!del[x.id]){S.content.push(x);add++}
+  if(add){Store.persist();DATAV++;render();scheduleSync()}}catch(e){}
 /* vergrendeling is verwijderd: oude instellingen opruimen */
 ["gym_lock_on","gym_lock_pin","gym_lock_salt","gym_lock_cred","gym_lock_after","gym_lock_fails","gym_lock_len"].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});
 /* eenmalig: waterdoel op 3 liter */
