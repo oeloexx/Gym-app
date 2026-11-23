@@ -393,7 +393,7 @@ body[data-sync="err"] .gear::after{background:#ff5c5c}
 .shopts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .shopt{display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:12px;align-items:center;text-align:left;padding:14px;border-radius:18px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
 .shopt span{grid-row:1/3;font-size:30px;text-align:center}.shopt b{font-family:Archivo;font-size:16px}.shopt small{color:var(--muted);font-size:13px}
-.shopt:active{transform:scale(.98)}.shopt:disabled{opacity:.5}
+.shopt:active{transform:scale(.98)}.shopt.main{border-color:rgba(34,211,238,.5);background:rgba(34,211,238,.1)}.shopt:disabled{opacity:.5}
 /* prestaties */
 .card.wcard,.card.mrowc,.meal,.hist div,.pk-card{content-visibility:auto;contain-intrinsic-size:auto 86px}
 /* oefeningen */
@@ -1309,7 +1309,7 @@ function wrapBanner(){const t=new Date();if(t.getDate()>7)return "";const pm=cap
   return '<button class="card wban" data-act="wrapped" data-k="m1"><span>🎁</span><div><b>Je '+pm+' Wrapped staat klaar</b><small>Bekijk hoe je maand ging ›</small></div></button>'}
 
 /* ---------- updates ---------- */
-const APP_VERSION="2.5.0";
+const APP_VERSION="2.5.1";
 async function checkUpdate(manual){
   if(location.protocol!=="https:"||location.hostname.endsWith("claude.ai")||location.hostname.includes("claudeusercontent")){if(manual)toast("Updates werken in de app op je beginscherm");return}
   try{
@@ -1502,7 +1502,7 @@ function workoutPRs(w){const out=new Set();for(const ex of w.exercises||[]){cons
 function workoutText(w){const prs=workoutPRs(w),ses=S.sessions.find(x=>(x.workoutIds||[]).includes(w.id));
   let t="💪 "+(w.name||"Training")+" · "+fmtDate(w.date,{weekday:"long",day:"numeric",month:"long"})+"\n";
   for(const ex of w.exercises||[]){const sets=(ex.sets||[]).filter(s=>num(s.reps));if(!sets.length)continue;
-    t+="\n"+ex.name+(prs.has(norm(ex.name))?" 🏆 PR":"")+"\n"+sets.map(s=>"  • "+setTxt(s)).join("\n")}
+    t+="\n"+ex.name+" ("+muscleOf(ex.name,ex.exId)+")"+(prs.has(norm(ex.name))?" 🏆 PR":"")+"\n"+sets.map(s=>"  • "+setTxt(s)).join("\n")}
   t+="\n\n"+setCount(w)+" sets · "+kShort(volume(w))+" kg totaal"+(ses?" · ⏱ "+Math.round(ses.dur/60)+" min":"");
   return t}
 const loadSrcImg=src=>new Promise(r=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src;setTimeout(()=>r(null),2500)});
@@ -1532,7 +1532,8 @@ async function workoutImage(w){
     x.textAlign="left";x.fillStyle="#fff";let nf=46;x.font="800 "+nf+"px Inter,system-ui,sans-serif";let nm=ex.name;const maxW=W-120-tx-(pr?90:0);
     while(x.measureText(nm).width>maxW&&nm.length>4)nm=nm.slice(0,-2)+"…";x.fillText(nm,tx,y+(rowH-20)/2-6);
     const best=sets.reduce((a,s)=>e1rm(num(s.kg),num(s.reps))>e1rm(num(a.kg),num(a.reps))?s:a,sets[0]);
-    x.fillStyle="rgba(230,249,255,.7)";x.font="500 32px Inter,system-ui,sans-serif";x.fillText(sets.length+(sets.length===1?" set":" sets")+" · beste "+setTxt(best),tx,y+(rowH-20)/2+40);
+    x.fillStyle="rgba(230,249,255,.7)";x.font="500 32px Inter,system-ui,sans-serif";{const mg=muscleOf(ex.name,ex.exId);x.font="800 28px Inter,system-ui,sans-serif";const mw=x.measureText(mg).width+32;x.fillStyle=MCOL[mg]||"#94a3b8";rr(tx,y+(rowH-20)/2+12,mw,42,21);x.fill();x.fillStyle="#00151b";x.fillText(mg,tx+16,y+(rowH-20)/2+42);
+      x.fillStyle="rgba(230,249,255,.7)";x.font="500 30px Inter,system-ui,sans-serif";x.fillText(sets.length+(sets.length===1?" set":" sets")+" · beste "+setTxt(best),tx+mw+16,y+(rowH-20)/2+42)}
     if(pr){x.textAlign="right";x.font="56px system-ui";x.fillText("🏆",W-110,y+(rowH-20)/2+18)}
     x.textAlign="center";y+=rowH}
   const name=lsGet(NKEY);if(name){x.fillStyle=tg;x.font='90px "Kaushan Script",cursive';x.fillText(name,W/2,H-110)}
@@ -1546,9 +1547,9 @@ async function shareText(text,title){try{if(navigator.share){await navigator.sha
 function sheetShare(){const d=S.draft,w=d.w,t=d.t;
   let h='<div class="sheet-head"><span style="width:60px"></span><h2>Delen</h2><button class="save" data-act="close">Klaar</button></div><div class="sheet-body">';
   if(w)h+='<div class="hero" style="text-align:center"><div class="hero-label">'+esc(fmtDate(w.date,{weekday:"long",day:"numeric",month:"long"}))+'</div><div class="sess-dur">'+esc(w.name||"Training")+'</div><div class="small muted">'+setCount(w)+' sets · '+kShort(volume(w))+' kg</div></div>'+
-    '<div class="shopts"><button class="shopt" data-act="shImg"><span>📸</span><b>Als afbeelding</b><small>Mooie story voor Instagram of WhatsApp</small></button>'+
-    '<button class="shopt" data-act="shTxt"><span>💬</span><b>Als tekst</b><small>Alle oefeningen, sets en gewichten</small></button>'+
-    '<button class="shopt" data-act="shTpl"><span>🔗</span><b>Als schema</b><small>Link waarmee een maat deze training in zijn eigen app zet</small></button></div>';
+    '<div class="shopts"><button class="shopt main" data-act="shView"><span>🔗</span><b>Link om te bekijken</b><small>Bijv. voor je vader: hij tikt op de link en ziet alle oefeningen, spiergroepen, sets en gewichten. Geen app nodig.</small></button>'+
+    '<button class="shopt" data-act="shImg"><span>📸</span><b>Als afbeelding</b><small>Story voor Instagram of WhatsApp</small></button>'+
+    '<button class="shopt" data-act="shTxt"><span>💬</span><b>Als tekst</b><small>Lijstje in een appje</small></button></div>';
   else if(t)h+='<div class="hero" style="text-align:center"><div class="hero-label">Schema</div><div class="sess-dur">'+esc(t.name)+'</div><div class="small muted">'+t.exercises.map(e=>esc(e.name)).join(" · ")+'</div></div>'+
     '<div class="shopts"><button class="shopt" data-act="shTpl"><span>🔗</span><b>Deel als link</b><small>Je maat opent de link en zet het schema met één tik in zijn eigen app</small></button>'+
     '<button class="shopt" data-act="shTplTxt"><span>💬</span><b>Als tekst</b><small>Lijstje met oefeningen en sets</small></button></div>';
@@ -1561,6 +1562,49 @@ function sheetImportTpl(){const t=S.draft;
 function checkShareLink(){const h=location.hash;if(!h.startsWith("#s="))return;const t=parseTplLink(h.slice(3));history.replaceState(null,"",location.pathname+location.search);
   if(!t){toast("Deze schema-link werkt niet");return}
   const go=()=>{const wl=$("#welcome");if(wl&&wl.style.display!=="none"&&!wl.classList.contains("out-up")){setTimeout(go,600);return}openSheet("importTpl",t)};go()}
+
+/* ---------- spiergroep per oefening + bekijk-link ---------- */
+const MUSC={borst:"Borst",schouders:"Schouders",triceps:"Triceps",biceps:"Biceps",onderarmen:"Onderarmen",lats:"Rug",rug:"Rug",onderrug:"Onderrug",traps:"Rug",quadriceps:"Benen",hamstrings:"Benen",adductoren:"Benen",heup:"Benen",billen:"Billen",kuiten:"Kuiten",buik:"Buik",nek:"Schouders"};
+const MCOL={Borst:"#22d3ee",Rug:"#818cf8",Onderrug:"#818cf8",Schouders:"#f472b6",Biceps:"#34d399",Triceps:"#2dd4bf",Onderarmen:"#86efac",Benen:"#fbbf24",Billen:"#fb7185",Kuiten:"#facc15",Buik:"#fb923c",Overig:"#94a3b8"};
+function muscleOf(name,exId){const e=(exId&&EXBY[exId])||EXNAME[norm(name)]||EXLOOSE[loose(name)],n=norm(name);
+  if(e&&MUSC[e.muscle])return MUSC[e.muscle];
+  if(/curl/.test(n)&&!/leg/.test(n))return "Biceps";if(/pushdown|tricep|skull|kickback|french press|dip/.test(n))return "Triceps";
+  if(/calf|kuit/.test(n))return "Kuiten";if(/hip thrust|glute|bil/.test(n))return "Billen";
+  const g=exGroup(name,exId);return g==="Armen"?"Armen":g}
+function viewLink(w){const ses=S.sessions.find(x=>(x.workoutIds||[]).includes(w.id)),prs=workoutPRs(w);
+  const o={n:w.name||"Training",d:w.date,a:lsGet(NKEY)||"",t:ses?Math.round(ses.dur/60):0,
+    e:(w.exercises||[]).map(ex=>{const sets=(ex.sets||[]).filter(s=>num(s.reps));return sets.length?[ex.name,ex.exId||"",muscleOf(ex.name,ex.exId),sets.map(s=>[num(s.kg),num(s.reps)]),prs.has(norm(ex.name))?1:0]:null}).filter(Boolean)};
+  return location.origin+location.pathname+"#v="+b64e(JSON.stringify(o))}
+function renderViewPage(){let o;try{o=JSON.parse(b64d(location.hash.slice(3)))}catch(e){o=null}
+  document.title=o?(o.n+" · "+(o.a||"Training")):"Training";
+  const css='<style>body{margin:0;background:#070b0e;color:#e8f4f8;font-family:Inter,system-ui,-apple-system,sans-serif;-webkit-user-select:text;user-select:text}'+
+    '.vw{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top) + 28px) 18px calc(env(safe-area-inset-bottom) + 40px)}'+
+    '.vh{text-align:center;padding:26px 16px;border-radius:26px;background:radial-gradient(circle at 85% 0,rgba(34,211,238,.28),transparent 60%),radial-gradient(circle at 0 100%,rgba(255,140,60,.22),transparent 60%),#0e151a;border:1px solid rgba(255,255,255,.08)}'+
+    '.vh small{display:block;color:#7fe7fb;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;font-size:12px}'+
+    '.vh h1{font-family:"Kaushan Script",cursive;font-weight:400;font-size:56px;line-height:1.15;margin:6px 0 4px;background:linear-gradient(100deg,#fff,#38bdf8 50%,#e6fbff);-webkit-background-clip:text;background-clip:text;color:transparent}'+
+    '.vh p{margin:0;color:#9fb3bd;font-size:15px}.vs{display:flex;gap:8px;justify-content:center;margin-top:16px;flex-wrap:wrap}.vs div{padding:10px 14px;border-radius:14px;background:rgba(255,255,255,.06);min-width:74px}.vs b{display:block;font-size:20px;color:#fff}.vs span{font-size:12px;color:#9fb3bd}'+
+    '.vl{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#9fb3bd;margin:24px 4px 10px}'+
+    '.vm{display:flex;flex-wrap:wrap;gap:8px}.vm span{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:14px;font-weight:700;background:rgba(255,255,255,.06)}.vm i{width:10px;height:10px;border-radius:50%}'+
+    '.ve{border-radius:20px;background:#0e151a;border:1px solid rgba(255,255,255,.08);margin-bottom:12px;overflow:hidden}.ve.pr{border-color:rgba(255,200,80,.55)}'+
+    '.vt{display:flex;gap:12px;align-items:center;padding:12px}.vt img{width:64px;height:64px;border-radius:14px;object-fit:cover;background:#fff;flex:none}.vt .ph{width:64px;height:64px;border-radius:14px;background:rgba(255,255,255,.06);flex:none;display:flex;align-items:center;justify-content:center;font-size:28px}'+
+    '.vt b{display:block;font-size:18px;color:#fff}.tag{display:inline-block;margin-top:5px;padding:3px 10px;border-radius:999px;font-size:13px;font-weight:800;color:#00151b}.prb{margin-left:6px;font-size:13px;font-weight:800;color:#ffcc66}'+
+    'table{width:100%;border-collapse:collapse;font-size:15px}th{font-size:12px;color:#9fb3bd;font-weight:700;text-align:left;padding:8px 14px;background:rgba(255,255,255,.03)}td{padding:9px 14px;border-top:1px solid rgba(255,255,255,.05)}td:first-child,th:first-child{width:56px;color:#9fb3bd}'+
+    '.vf{text-align:center;color:#6b7c85;font-size:13px;margin-top:26px}@font-face{font-family:"Kaushan Script";src:url(kaushan-script.woff2) format("woff2");font-display:swap}</style>';
+  if(!o||!Array.isArray(o.e)){document.body.innerHTML=css+'<div class="vw"><div class="vh"><h1>Oeps</h1><p>Deze link werkt niet (meer). Vraag of hij hem opnieuw stuurt.</p></div></div>';return}
+  const vol=o.e.reduce((a,x)=>a+x[3].reduce((b,s)=>b+s[0]*s[1],0),0),nsets=o.e.reduce((a,x)=>a+x[3].length,0),prn=o.e.filter(x=>x[4]).length;
+  const cnt={};o.e.forEach(x=>cnt[x[2]]=(cnt[x[2]]||0)+x[3].length);
+  const date=o.d?new Date(o.d+"T12:00:00").toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"}):"";
+  const img=x=>{const e=x[1]&&EXBY[x[1]];if(!x[1])return '<span class="ph">🏋️</span>';const src=e&&e.pop?"img/ex/"+x[1]+"_0.jpg":"https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/"+encodeURIComponent(x[1])+"/0.jpg";
+    return '<img src="'+esc(src)+'" alt="" onerror="this.outerHTML=\'<span class=ph>🏋️</span>\'">'};
+  let h=css+'<div class="vw"><div class="vh"><small>'+(o.a?'Training van '+esc(o.a):'Training')+'</small><h1>'+esc(o.n)+'</h1><p>'+esc(date)+'</p>'+
+    '<div class="vs"><div><b>'+o.e.length+'</b><span>oefeningen</span></div><div><b>'+nsets+'</b><span>sets</span></div>'+(vol?'<div><b>'+Math.round(vol).toLocaleString("nl-NL")+' kg</b><span>totaal getild</span></div>':'')+(o.t?'<div><b>'+o.t+' min</b><span>duur</span></div>':'')+(prn?'<div><b>'+prn+' 🏆</b><span>record'+(prn>1?'s':'')+'</span></div>':'')+'</div></div>';
+  h+='<div class="vl">Getrainde spiergroepen</div><div class="vm">'+Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([g,n])=>'<span><i style="background:'+(MCOL[g]||"#94a3b8")+'"></i>'+esc(g)+' · '+n+' sets</span>').join("")+'</div>';
+  h+='<div class="vl">Oefeningen</div>';
+  for(const x of o.e){h+='<div class="ve'+(x[4]?' pr':'')+'"><div class="vt">'+img(x)+'<div><b>'+esc(x[0])+'</b><span class="tag" style="background:'+(MCOL[x[2]]||"#94a3b8")+'">'+esc(x[2])+'</span>'+(x[4]?'<span class="prb">🏆 Nieuw record</span>':'')+'</div></div>'+
+    '<table><tr><th>Set</th><th>Gewicht</th><th>Herhalingen</th></tr>'+x[3].map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+(s[0]?String(s[0]).replace(".",",")+' kg':'eigen gewicht')+'</td><td>'+s[1]+'×</td></tr>').join("")+'</table></div>'}
+  h+='<div class="vf">💪 Gemaakt met de Gym-app'+(o.a?' van '+esc(o.a):'')+'</div></div>';
+  document.body.innerHTML=h;document.body.className="";document.body.style.cssText="";
+}
 
 /* ---------- eigen maaltijden + supplementen ---------- */
 const MKEY="gym_meals",SLKEY="gym_supp_list",SGKEY="gym_supp_log";
@@ -2761,6 +2805,7 @@ document.addEventListener("click",async ev=>{
     case "shareW":{const w=S.workouts.find(x=>x.id===d.id);if(w)openSheet("share",{w:clone(w)});break}
     case "shareT":{const t=getWT().find(x=>x.id===d.id);if(t)openSheet("share",{t:clone(t)});break}
     case "shImg":{a.disabled=true;toast("Afbeelding maken…");try{const b=await workoutImage(d.w);if(b)await shareBlob(b,(d.w.name||"training").toLowerCase().replace(/\W+/g,"-")+".png");else toast("Afbeelding maken lukte niet")}catch(e){toast("Afbeelding maken lukte niet")}a.disabled=false;break}
+    case "shView":await shareText((d.w.name||"Training")+" van vandaag 💪 Tik om te bekijken:\n"+viewLink(d.w),d.w.name||"Training");break;
     case "shTxt":await shareText(workoutText(d.w),d.w.name||"Training");break;
     case "shTpl":{const src=d.t||{name:d.w.name||"Training",exercises:(d.w.exercises||[]).map(e=>({name:e.name,exId:e.exId,sets:(e.sets||[]).filter(s=>num(s.reps)).length||3}))};
       await shareText("💪 Mijn "+src.name+"-schema. Tik op de link om het in je Gym-app te zetten:\n"+tplLink(src),src.name);break}
@@ -2908,8 +2953,9 @@ function refreshCopy(){
     $("#sheet .grid2").after(b);
   }
 }
-window.addEventListener("hashchange",()=>{if(location.hash.startsWith("#s=")){checkShareLink();return}const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
+window.addEventListener("hashchange",()=>{if(location.hash.startsWith("#v=")){location.reload();return}if(location.hash.startsWith("#s=")){checkShareLink();return}const h=location.hash.slice(1);if(["train","sess","prog","meas","food","content"].includes(h)&&h!==S.tab){S.tab=h;render()}});
 
+if(location.hash.startsWith("#v=")){fetch("exercises.json").then(r=>r.json()).then(list=>{for(const [id,name,group,muscle,pop] of list)EXBY[id]={id,name,group,muscle,pop:!!pop}}).catch(()=>{}).finally(renderViewPage);return}
 if(lsGet("gym_fx"))document.documentElement.classList.add("fx");
 render();
 Store.init();
